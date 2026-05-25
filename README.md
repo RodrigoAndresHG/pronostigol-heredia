@@ -98,22 +98,64 @@ automáticamente — no necesitas un servidor aparte.
 
 ```
 pronostigol-heredia/
-├── api/                  # Funciones serverless (Fase 3+)
-├── public/               # Estáticos (favicon, íconos PWA)
+├── api/                       # Funciones serverless (Vercel + middleware de Vite)
+│   ├── predecir.ts            # POST /api/predecir
+│   └── _lib/
+│       ├── core.ts            # función predecir() — 3 IAs en paralelo + síntesis
+│       ├── prompt.ts          # construye el prompt idéntico para las 3
+│       ├── parser.ts          # extracción + normalización de JSON
+│       ├── iaClaude.ts        # adaptador Anthropic
+│       ├── iaGPT.ts           # adaptador OpenAI
+│       ├── iaGemini.ts        # adaptador Google
+│       └── sintesis.ts        # veredicto consenso/desacuerdo + prob final
+├── public/                    # Estáticos (favicon, íconos PWA)
+├── scripts/
+│   └── validar-datos.ts       # Verifica integridad del dataset
+├── tests/
+│   └── modeloBase.test.ts     # Tests del modelo base
 ├── src/
-│   ├── componentes/      # Piezas reutilizables (BarraNavegacion, AvisoLegal)
-│   ├── paginas/          # Una por ruta (Inicio, Calendario, DetallePartido, …)
-│   ├── lib/              # Lógica de negocio (modeloBase, sintesis) — Fase 2+
-│   ├── datos/            # Mocks y datasets estáticos — Fase 1
-│   ├── tipos/            # Tipos TypeScript compartidos — Fase 1
-│   ├── App.tsx           # Layout + rutas
-│   ├── main.tsx          # Punto de entrada
-│   └── index.css         # Tailwind + estilos base
-├── .env.example          # Plantilla de variables (sin secretos)
-├── tailwind.config.js    # Paleta de marca HeredIA
-├── vite.config.ts        # Vite + PWA
-└── vercel.json           # Configuración de despliegue
+│   ├── componentes/           # Piezas reutilizables
+│   ├── paginas/               # Una por ruta
+│   ├── lib/                   # modeloBase, usePrediccionApi, zonaHoraria, formato
+│   ├── datos/                 # Equipos, grupos, partidos, predicciones mock
+│   ├── tipos/                 # Tipos TS compartidos
+│   ├── App.tsx                # Layout + rutas
+│   ├── main.tsx               # Punto de entrada
+│   └── index.css              # Tailwind + estilos base
+├── .env.example               # Plantilla de variables
+├── tailwind.config.js         # Paleta de marca HeredIA
+├── vite.config.ts             # Vite + PWA + middleware /api dev
+├── vite-plugin-api-dev.ts     # Plugin que sirve /api durante npm run dev
+└── vercel.json                # Configuración de despliegue
 ```
+
+---
+
+## Cómo usar las 3 IAs en local
+
+Para que las predicciones funcionen también con `npm run dev` (no sólo
+en Vercel), el repo incluye un plugin de Vite que monta los handlers
+de `/api/*` como middleware. **No necesitas `vercel dev`**.
+
+1. Pon tus 3 claves en `.env.local`:
+   ```env
+   ANTHROPIC_API_KEY=sk-ant-...
+   OPENAI_API_KEY=sk-...
+   GOOGLE_API_KEY=...
+   ```
+2. (Opcional) Si quieres usar versiones específicas de modelos:
+   ```env
+   MODELO_CLAUDE=claude-sonnet-4-5-20250929
+   MODELO_GPT=gpt-4o
+   MODELO_GEMINI=gemini-2.5-flash
+   ```
+3. `npm run dev` y entra a la pantalla de detalle de cualquier partido
+   sin predicción mock (p. ej. `/partido/B-MD1-1`). El botón "Consultar
+   a las 3 IAs" dispara la llamada.
+
+Sin claves, el endpoint responde con 200 y muestra cada IA con su
+error explícito ("ANTHROPIC_API_KEY no configurada"). La UI lo pinta
+en cada tarjeta — graceful degradation.
 
 ---
 
@@ -122,9 +164,9 @@ pronostigol-heredia/
 | Fase | Entregable                                            | Estado |
 | ---- | ----------------------------------------------------- | ------ |
 | 0    | Esqueleto desplegable + landing                       | ✅      |
-| 1    | UI completa con dataset mock (48 equipos, 12 grupos)  | ⏳      |
-| 2    | Modelo base de probabilidad (Elo + forma + descanso)  | ⏳      |
-| 3    | Backend serverless con las 3 IAs + síntesis           | ⏳      |
+| 1    | UI completa con dataset oficial (48 equipos, 72 partidos) | ✅  |
+| 2    | Modelo base de probabilidad (Elo + sede + forma + descanso) | ✅ |
+| 3    | Backend serverless con las 3 IAs + síntesis           | ✅      |
 | 4    | Datos reales de fútbol y cuotas de mercado            | ⏳      |
 | 5    | Supabase: persistencia + historial real               | ⏳      |
 | 6    | Compartir, íconos PWA, pulido visual                  | ⏳      |
