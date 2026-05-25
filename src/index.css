@@ -1,0 +1,24 @@
+/* Tipografías desde Google Fonts. Inter para cuerpo, Space Grotesk para titulares.
+   Los @import deben ir antes que cualquier otra regla, incluidas las @tailwind. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+/* Directivas de Tailwind — generan todas las utilidades en build. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Estilos base mínimos. El resto vive en componentes. */
+html,
+body,
+#root {
+  height: 100%;
+  background-color: #F8FAFC; /* marca.grisFondo */
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  color: #0A0A0F;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
