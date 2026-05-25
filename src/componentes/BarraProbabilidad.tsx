@@ -60,19 +60,32 @@ function BarraProbabilidad({ local, empate, visitante, titulo, compacto = false 
         />
       </div>
 
-      {/* Leyenda con porcentajes */}
-      <div className={`mt-1.5 flex justify-between ${fontSize} font-medium text-marca-tinta`}>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-marca-primario" />
-          Local <span className="text-marca-grisTexto">{pctLocal}</span>
+      {/* Leyenda con porcentajes.
+          - Modo completo: dot + etiqueta + porcentaje ("Local 60%").
+          - Modo compacto: dot + porcentaje sólo, para que entre en
+            cualquier ancho de tarjeta (las etiquetas de columna ya
+            dan contexto: la primera es siempre Local, la última Visitante). */}
+      <div className={`mt-1.5 flex justify-between gap-1 ${fontSize} font-medium text-marca-tinta`}>
+        <span className="flex items-center gap-1 min-w-0">
+          <span className="inline-block w-2 h-2 rounded-full bg-marca-primario flex-shrink-0" />
+          {!compacto && <span>Local</span>}
+          <span className={compacto ? 'text-marca-tinta' : 'text-marca-grisTexto'}>
+            {pctLocal}
+          </span>
         </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-marca-grisTexto/40" />
-          Empate <span className="text-marca-grisTexto">{pctEmpate}</span>
+        <span className="flex items-center gap-1 min-w-0">
+          <span className="inline-block w-2 h-2 rounded-full bg-marca-grisTexto/40 flex-shrink-0" />
+          {!compacto && <span>Empate</span>}
+          <span className={compacto ? 'text-marca-tinta' : 'text-marca-grisTexto'}>
+            {pctEmpate}
+          </span>
         </span>
-        <span className="flex items-center gap-1">
-          <span className="inline-block w-2 h-2 rounded-full bg-marca-acento" />
-          Visitante <span className="text-marca-grisTexto">{pctVisitante}</span>
+        <span className="flex items-center gap-1 min-w-0">
+          <span className="inline-block w-2 h-2 rounded-full bg-marca-acento flex-shrink-0" />
+          {!compacto && <span>Visitante</span>}
+          <span className={compacto ? 'text-marca-tinta' : 'text-marca-grisTexto'}>
+            {pctVisitante}
+          </span>
         </span>
       </div>
     </div>

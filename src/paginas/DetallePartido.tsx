@@ -128,12 +128,15 @@ function DetallePartido() {
             />
           </section>
 
-          {/* Las 3 IAs lado a lado (apiladas en móvil, en grid en escritorio) */}
+          {/* Las 3 IAs lado a lado.
+              Se apilan en móvil/tableta y sólo pasan a grilla de 3 columnas
+              en pantallas grandes (≥ lg, 1024px), donde hay espacio real
+              para que cada tarjeta respire sin romper la leyenda interna. */}
           <section>
             <h2 className="font-display text-lg font-semibold text-marca-tinta mb-3">
               Lo que dijo cada IA
             </h2>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 lg:grid-cols-3">
               {prediccion.respuestasIA.map((respuesta) => (
                 <TarjetaIA key={respuesta.ia} respuesta={respuesta} />
               ))}
