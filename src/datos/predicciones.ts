@@ -1,26 +1,35 @@
 import type { Prediccion, RegistroHistorial, Partido } from '../tipos';
+import { calcularProbabilidadBase } from '../lib/modeloBase.ts';
+import { partidoPorId } from './partidos.ts';
 
 /**
  * Predicciones mock para los partidos destacados del Mundial 2026.
  *
- * Estas son las que se muestran en la pantalla de detalle mientras
- * no tenemos backend (Fase 3). Cada predicción ilustra una situación
- * distinta a propósito:
+ * Se muestran en la pantalla de detalle mientras no tenemos backend
+ * (Fase 3). Cada una ilustra una situación distinta a propósito:
  *   - Inaugural (MEX vs RSA): CONSENSO claro, México favorito en casa.
  *   - CIV vs ECU (Grupo E):   DESACUERDO, partido parejo.
  *   - BRA vs MAR (Grupo C):   DESACUERDO + SEÑAL DE VALOR (Marruecos infravalorado).
  *   - ARG vs ALG (Grupo J):   CONSENSO, Argentina favorita amplia.
  *
- * Para los partidos sin predicción aquí, la UI muestra "predicción
- * pendiente" en lugar de inventar números.
+ * Diseño: la `probabilidadBase` ya NO está hardcodeada. La calcula el
+ * modelo en vivo (lib/modeloBase) al cargar el módulo. Las respuestas
+ * de las IAs sí están hand-tuned porque ilustran opiniones distintas
+ * sobre el mismo partido. Cuando entren los modelos reales en Fase 3,
+ * estas respuestas mock se reemplazan con llamadas a /api/predecir.
  */
 
-export const PREDICCIONES: Record<string, Prediccion> = {
+/**
+ * Plantilla de predicción sin la `probabilidadBase` — esa la inyecta
+ * el modelo abajo.
+ */
+type PrediccionSinBase = Omit<Prediccion, 'probabilidadBase'>;
+
+const PREDICCIONES_RAW: PrediccionSinBase[] = [
   // ── Partido inaugural · México vs Sudáfrica · 11 jun · Azteca ─────
-  'A-MD1-1': {
+  {
     partidoId: 'A-MD1-1',
     timestampISO: '2026-06-10T12:00:00Z',
-    probabilidadBase: { local: 0.58, empate: 0.24, visitante: 0.18 },
     respuestasIA: [
       {
         ia: 'Claude',
@@ -55,10 +64,9 @@ export const PREDICCIONES: Record<string, Prediccion> = {
   },
 
   // ── Brasil vs Marruecos · Grupo C, MD1 · 13 jun · Gillette ────────
-  'C-MD1-1': {
+  {
     partidoId: 'C-MD1-1',
     timestampISO: '2026-06-12T12:00:00Z',
-    probabilidadBase: { local: 0.51, empate: 0.27, visitante: 0.22 },
     respuestasIA: [
       {
         ia: 'Claude',
@@ -81,7 +89,7 @@ export const PREDICCIONES: Record<string, Prediccion> = {
         probabilidad: { local: 0.49, empate: 0.28, visitante: 0.23 },
         confianza: 68,
         explicacion:
-          'Diferencial ELO (1810 vs 1695) marca a Brasil favorita, pero el factor "Marruecos plantea problemas físicos a sudamericanos" se ha repetido en 4 de los últimos 5 cruces de Marruecos vs CONMEBOL.',
+          'Diferencial Elo (1810 vs 1695) marca a Brasil favorita, pero el factor "Marruecos plantea problemas físicos a sudamericanos" se ha repetido en 4 de los últimos 5 cruces de Marruecos vs CONMEBOL.',
         marcadorEsperado: '1-1',
       },
     ],
@@ -99,10 +107,9 @@ export const PREDICCIONES: Record<string, Prediccion> = {
   },
 
   // ── Costa de Marfil vs Ecuador · Grupo E, MD1 · 14 jun · NRG ──────
-  'E-MD1-2': {
+  {
     partidoId: 'E-MD1-2',
     timestampISO: '2026-06-13T12:00:00Z',
-    probabilidadBase: { local: 0.34, empate: 0.30, visitante: 0.36 },
     respuestasIA: [
       {
         ia: 'Claude',
@@ -143,10 +150,9 @@ export const PREDICCIONES: Record<string, Prediccion> = {
   },
 
   // ── Argentina vs Argelia · Grupo J, MD1 · 16 jun · Arrowhead ──────
-  'J-MD1-3': {
+  {
     partidoId: 'J-MD1-3',
     timestampISO: '2026-06-15T12:00:00Z',
-    probabilidadBase: { local: 0.72, empate: 0.18, visitante: 0.10 },
     respuestasIA: [
       {
         ia: 'Claude',
@@ -179,7 +185,24 @@ export const PREDICCIONES: Record<string, Prediccion> = {
       'Consenso fuerte: Argentina favorita con probabilidad superior al 70% en las tres IAs. Confianza alta (80-85). El mercado coincide.',
     cuotaMercado: { local: 0.71, empate: 0.20, visitante: 0.09 },
   },
-};
+];
+
+/**
+ * Las predicciones finales con `probabilidadBase` ya calculada por el modelo.
+ * Se construye una sola vez al cargar el módulo.
+ */
+export const PREDICCIONES: Record<string, Prediccion> = Object.fromEntries(
+  PREDICCIONES_RAW.map((raw): [string, Prediccion] => {
+    const partido = partidoPorId(raw.partidoId);
+    if (!partido) {
+      throw new Error(
+        `Predicción mock referencia un partido inexistente: ${raw.partidoId}`
+      );
+    }
+    const { probabilidad } = calcularProbabilidadBase(partido);
+    return [raw.partidoId, { ...raw, probabilidadBase: probabilidad }];
+  })
+);
 
 /**
  * Devuelve la predicción mock para un partido, o null si no existe.

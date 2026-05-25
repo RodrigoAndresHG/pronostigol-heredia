@@ -1,31 +1,44 @@
+import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { partidoPorId } from '../datos/partidos';
-import { equipoPorId } from '../datos/equipos';
-import { prediccionPara } from '../datos/predicciones';
+import { partidoPorId } from '../datos/partidos.ts';
+import { equipoPorId } from '../datos/equipos.ts';
+import { prediccionPara } from '../datos/predicciones.ts';
+import { calcularProbabilidadBase } from '../lib/modeloBase.ts';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 import BarraProbabilidad from '../componentes/BarraProbabilidad';
 import TarjetaIA from '../componentes/TarjetaIA';
 import VeredictoSintesis from '../componentes/VeredictoSintesis';
 import SenalValor from '../componentes/SenalValor';
+import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
 
 /**
  * Página de detalle del partido — la pieza central de la app.
  *
  * Composición vertical en móvil (de arriba a abajo):
  *   1. Cabecera con los dos equipos y la hora local.
- *   2. Probabilidad base (Capa 1).
- *   3. Veredicto sintetizado de las 3 IAs.
- *   4. Probabilidad final (consenso ponderado).
- *   5. Las 3 tarjetas de IA (en grilla en pantallas ≥sm).
+ *   2. Capa 1 — Probabilidad base del modelo (siempre disponible).
+ *   2b. Expandible "Cómo lo calculó" con el desglose del modelo.
+ *   3. Veredicto sintetizado de las 3 IAs (si ya hay predicción).
+ *   4. Capa 2 — Probabilidad final (consenso ponderado).
+ *   5. Las 3 tarjetas de IA.
  *   6. Señal de valor vs mercado.
  *   7. Botón de compartir (placeholder de Fase 6).
+ *
+ * Si todavía no se generó la predicción de las IAs, mostramos sólo la
+ * Capa 1 (que ya está viva) y avisamos que la Capa 2 entra antes del kickoff.
  */
 function DetallePartido() {
   const { idPartido } = useParams();
   const partido = idPartido ? partidoPorId(idPartido) : undefined;
 
-  // Manejo defensivo: ID inexistente. Mejor mostrar mensaje que crashear.
-  if (!partido) {
+  // Compute Capa 1 con cualquier partido válido. useMemo porque depende del id.
+  const modelo = useMemo(
+    () => (partido ? calcularProbabilidadBase(partido) : null),
+    [partido]
+  );
+
+  // Manejo defensivo: ID inexistente.
+  if (!partido || !modelo) {
     return (
       <div className="space-y-3">
         <h1 className="font-display text-2xl font-bold text-marca-tinta">
@@ -44,6 +57,11 @@ function DetallePartido() {
   const local = equipoPorId(partido.equipoLocalId);
   const visitante = equipoPorId(partido.equipoVisitanteId);
   const prediccion = prediccionPara(partido.id);
+
+  // Si hay predicción, usamos su base (que ya viene del modelo). Si no,
+  // mostramos directamente la salida del modelo. En ambos casos es la
+  // misma fuente — la Capa 1 vive aunque las IAs aún no hayan hablado.
+  const probabilidadBase = prediccion?.probabilidadBase ?? modelo.probabilidad;
 
   return (
     <div className="space-y-6">
@@ -67,9 +85,7 @@ function DetallePartido() {
             <p className="mt-2 font-display font-semibold text-marca-tinta">
               {local.nombre}
             </p>
-            <p className="text-xs text-marca-grisTexto">
-              Rating {local.rating}
-            </p>
+            <p className="text-xs text-marca-grisTexto">Rating {local.rating}</p>
           </div>
           <div className="text-marca-grisTexto text-2xl font-display">vs</div>
           <div className="text-center">
@@ -77,9 +93,7 @@ function DetallePartido() {
             <p className="mt-2 font-display font-semibold text-marca-tinta">
               {visitante.nombre}
             </p>
-            <p className="text-xs text-marca-grisTexto">
-              Rating {visitante.rating}
-            </p>
+            <p className="text-xs text-marca-grisTexto">Rating {visitante.rating}</p>
           </div>
         </div>
 
@@ -88,30 +102,40 @@ function DetallePartido() {
         </p>
       </section>
 
-      {/* Caso sin predicción todavía */}
+      {/* Capa 1 — probabilidad base (siempre visible) */}
+      <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
+        <BarraProbabilidad
+          titulo="Capa 1 · Probabilidad base (modelo estadístico)"
+          local={probabilidadBase.local}
+          empate={probabilidadBase.empate}
+          visitante={probabilidadBase.visitante}
+        />
+        <p className="mt-3 text-xs text-marca-grisTexto leading-relaxed">
+          Calculada con rating Elo, ventaja de sede, forma y descanso —
+          sin opinión cualitativa. Las IAs (Capa 2) parten de aquí.
+        </p>
+      </section>
+
+      {/* Expandible: cómo lo calculó */}
+      <DesgloseModeloBase
+        desglose={modelo.desglose}
+        equipoLocalId={partido.equipoLocalId}
+        equipoVisitanteId={partido.equipoVisitanteId}
+      />
+
+      {/* Caso sin predicción de IAs */}
       {!prediccion ? (
         <section className="rounded-2xl border border-dashed border-marca-grisLinea p-6 bg-white text-center">
           <p className="text-marca-grisTexto">
-            La predicción para este partido aún no se ha generado. Volverá a
-            poblarse automáticamente desde el backend antes del kickoff.
+            La Capa 1 ya está lista. Las 3 IAs (Capa 2) generan su
+            predicción automáticamente antes del kickoff.
+          </p>
+          <p className="mt-2 text-xs text-marca-grisTexto/70">
+            (Fase 3 — backend con Claude + GPT + Gemini.)
           </p>
         </section>
       ) : (
         <>
-          {/* Capa 1 — probabilidad base */}
-          <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
-            <BarraProbabilidad
-              titulo="Capa 1 · Probabilidad base (modelo estadístico)"
-              local={prediccion.probabilidadBase.local}
-              empate={prediccion.probabilidadBase.empate}
-              visitante={prediccion.probabilidadBase.visitante}
-            />
-            <p className="mt-3 text-xs text-marca-grisTexto leading-relaxed">
-              Calculada con ranking, forma reciente, sede y descanso —
-              sin opinión cualitativa. Sirve como punto de partida para las IAs.
-            </p>
-          </section>
-
           {/* Veredicto sintetizado */}
           <VeredictoSintesis
             veredicto={prediccion.veredicto}
@@ -128,10 +152,7 @@ function DetallePartido() {
             />
           </section>
 
-          {/* Las 3 IAs lado a lado.
-              Se apilan en móvil/tableta y sólo pasan a grilla de 3 columnas
-              en pantallas grandes (≥ lg, 1024px), donde hay espacio real
-              para que cada tarjeta respire sin romper la leyenda interna. */}
+          {/* Las 3 IAs en grilla en pantallas grandes, apiladas en móvil/tablet */}
           <section>
             <h2 className="font-display text-lg font-semibold text-marca-tinta mb-3">
               Lo que dijo cada IA
