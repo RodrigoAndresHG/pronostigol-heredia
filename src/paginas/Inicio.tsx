@@ -1,17 +1,19 @@
 import { Link } from 'react-router-dom';
+import { PARTIDOS } from '../datos/partidos';
+import TarjetaPartido from '../componentes/TarjetaPartido';
 
 /**
  * Página de inicio / landing.
  *
- * Su trabajo en la Fase 0 es:
- *   1. Decir qué es PronostiGol HeredIA en una frase.
- *   2. Mostrar las 3 piezas únicas (consenso, desacuerdo, valor).
- *   3. Llevar al usuario al calendario.
- *
- * Cuando entren más datos reales (Fases 1-4) sumaremos aquí
- * "próximos 3 partidos" como vista rápida.
+ * Tres bloques:
+ *   1. Hero con la propuesta de valor.
+ *   2. Tres tarjetas que explican el diferencial (consenso/desacuerdo/valor).
+ *   3. Próximos 3 partidos como anticipo del calendario.
  */
 function Inicio() {
+  // Tomamos los 3 primeros partidos del calendario (ya viene ordenado por fecha).
+  const proximosPartidos = PARTIDOS.slice(0, 3);
+
   return (
     <div className="space-y-10">
       {/* Hero */}
@@ -64,14 +66,34 @@ function Inicio() {
         />
       </section>
 
-      {/* Estado actual honesto */}
+      {/* Próximos partidos */}
+      <section>
+        <div className="flex items-baseline justify-between mb-3">
+          <h2 className="font-display text-xl font-semibold text-marca-tinta">
+            Próximos partidos
+          </h2>
+          <Link
+            to="/calendario"
+            className="text-sm text-marca-primario font-medium"
+          >
+            Ver todo →
+          </Link>
+        </div>
+        <div className="space-y-2">
+          {proximosPartidos.map((partido) => (
+            <TarjetaPartido key={partido.id} partido={partido} />
+          ))}
+        </div>
+      </section>
+
+      {/* Estado del proyecto */}
       <section className="rounded-2xl border border-dashed border-marca-grisLinea p-5 bg-white">
         <p className="text-xs uppercase tracking-widest text-marca-acento font-semibold">
           Estado del proyecto
         </p>
         <p className="mt-2 text-marca-grisTexto">
-          Estamos en Fase 0: esqueleto desplegado. Las predicciones reales
-          empiezan a generarse antes del partido inaugural,{' '}
+          Fase 1: UI completa con datos mock. Las predicciones reales con
+          las 3 IAs se conectan en Fase 3, antes del{' '}
           <strong className="text-marca-tinta">11 de junio de 2026</strong>.
         </p>
       </section>
@@ -79,10 +101,6 @@ function Inicio() {
   );
 }
 
-/**
- * Tarjeta pequeña reutilizada en la grilla del hero.
- * Definida acá porque sólo se usa en esta página.
- */
 function Tarjeta({
   titulo,
   texto,
