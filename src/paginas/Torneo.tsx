@@ -36,8 +36,12 @@ function Torneo() {
         cuerpo="Octavos (16), Cuartos (8), Semifinales (4), Tercer puesto y Final. Todo a eliminación directa, con tiempo extra y penales si hace falta."
       />
       <BloqueExplicacion
+        titulo="Partido inaugural"
+        cuerpo="Jueves 11 de junio de 2026, México vs Sudáfrica en el Estadio Azteca, Ciudad de México. Es la inauguración formal del torneo y el reencuentro del Azteca con un Mundial 36 años después de 1986."
+      />
+      <BloqueExplicacion
         titulo="Calendario clave"
-        cuerpo="Inicio: 11 de junio de 2026. Final: 19 de julio de 2026. El partido inaugural será en México (Estadio Azteca); la final, en Estados Unidos (MetLife, Nueva Jersey)."
+        cuerpo="Fase de grupos: 11 al 27 de junio. Ronda de 32: 28 de junio al 3 de julio. Octavos: 4-7 de julio. Cuartos: 9-11 de julio. Semifinales: 14-15 de julio. Tercer puesto: 18 de julio. Final: domingo 19 de julio de 2026 en el MetLife Stadium, Nueva Jersey."
       />
     </article>
   );

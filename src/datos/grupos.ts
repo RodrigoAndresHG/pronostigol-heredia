@@ -1,5 +1,5 @@
 import type { LetraGrupo } from '../tipos';
-import { EQUIPOS } from './equipos';
+import { EQUIPOS } from './equipos.ts';
 
 /**
  * Las 12 letras de grupo en orden.

@@ -1,140 +1,183 @@
 import type { Prediccion, RegistroHistorial, Partido } from '../tipos';
 
 /**
- * Predicciones mock para algunos partidos destacados.
+ * Predicciones mock para los partidos destacados del Mundial 2026.
  *
  * Estas son las que se muestran en la pantalla de detalle mientras
  * no tenemos backend (Fase 3). Cada predicción ilustra una situación
  * distinta a propósito:
- *   - Inaugural (MEX vs CRO): DESACUERDO marcado entre las 3 IAs.
- *   - Ecuador vs Bélgica:     CONSENSO, mercado y IAs alineados.
- *   - Argentina vs Países Bajos: DESACUERDO leve en magnitud.
+ *   - Inaugural (MEX vs RSA): CONSENSO claro, México favorito en casa.
+ *   - CIV vs ECU (Grupo E):   DESACUERDO, partido parejo.
+ *   - BRA vs MAR (Grupo C):   DESACUERDO + SEÑAL DE VALOR (Marruecos infravalorado).
+ *   - ARG vs ALG (Grupo J):   CONSENSO, Argentina favorita amplia.
  *
  * Para los partidos sin predicción aquí, la UI muestra "predicción
  * pendiente" en lugar de inventar números.
  */
 
 export const PREDICCIONES: Record<string, Prediccion> = {
-  // ── Partido inaugural: México vs Croacia ──────────────────────────
-  'MD1-A-1': {
-    partidoId: 'MD1-A-1',
+  // ── Partido inaugural · México vs Sudáfrica · 11 jun · Azteca ─────
+  'A-MD1-1': {
+    partidoId: 'A-MD1-1',
     timestampISO: '2026-06-10T12:00:00Z',
-    probabilidadBase: { local: 0.35, empate: 0.28, visitante: 0.37 },
+    probabilidadBase: { local: 0.58, empate: 0.24, visitante: 0.18 },
     respuestasIA: [
       {
         ia: 'Claude',
-        probabilidad: { local: 0.32, empate: 0.30, visitante: 0.38 },
-        confianza: 65,
+        probabilidad: { local: 0.60, empate: 0.25, visitante: 0.15 },
+        confianza: 78,
         explicacion:
-          'Croacia tiene mejor calidad individual pero el factor sede en el Azteca es enorme. Espero un partido cerrado donde la altitud penalice a Croacia en los últimos 20 minutos. Riesgo real de empate.',
-        marcadorEsperado: '1-1',
-      },
-      {
-        ia: 'GPT',
-        probabilidad: { local: 0.38, empate: 0.24, visitante: 0.38 },
-        confianza: 70,
-        explicacion:
-          'México llega con confianza tras un ciclo regular bajo su nuevo DT. Croacia es veterana pero con piernas justas en mediocampo. El empate es menos probable de lo que parece.',
-        marcadorEsperado: '2-1',
-      },
-      {
-        ia: 'Gemini',
-        probabilidad: { local: 0.30, empate: 0.26, visitante: 0.44 },
-        confianza: 75,
-        explicacion:
-          'El diferencial de ranking favorece a Croacia. Su volumen de juego central debería imponerse al desorden defensivo mexicano evidenciado en sus últimos amistosos.',
-        marcadorEsperado: '1-2',
-      },
-    ],
-    probabilidadFinal: { local: 0.33, empate: 0.27, visitante: 0.40 },
-    veredicto: 'desacuerdo',
-    notaVeredicto:
-      'Gemini ve a Croacia clara favorita; Claude y GPT lo ven prácticamente abierto. La fuente del desacuerdo es cuánto pesa el factor sede frente al ranking puro.',
-    cuotaMercado: { local: 0.33, empate: 0.27, visitante: 0.40 },
-    // Mercado y consenso coinciden — no hay señal clara.
-  },
-
-  // ── Bélgica vs Ecuador (Grupo B, MD2) ─────────────────────────────
-  // Bélgica es local en este encuentro según la rotación del grupo.
-  'MD2-B-2': {
-    partidoId: 'MD2-B-2',
-    timestampISO: '2026-06-16T12:00:00Z',
-    probabilidadBase: { local: 0.53, empate: 0.25, visitante: 0.22 },
-    respuestasIA: [
-      {
-        ia: 'Claude',
-        probabilidad: { local: 0.54, empate: 0.28, visitante: 0.18 },
-        confianza: 70,
-        explicacion:
-          'Bélgica tiene el plantel más profundo pero su generación dorada ya cerró ciclo. Ecuador puede sacar empate aprovechando su físico, pero la victoria parece lejana sin un partido extraordinario.',
+          'México llega como anfitrión en el Azteca, con afición y altitud a favor. Sudáfrica es competitiva pero su nivel reciente no alcanza para incomodar al local en su estadio histórico. Riesgo bajo de sorpresa.',
         marcadorEsperado: '2-0',
       },
       {
         ia: 'GPT',
-        probabilidad: { local: 0.56, empate: 0.24, visitante: 0.20 },
-        confianza: 68,
+        probabilidad: { local: 0.62, empate: 0.22, visitante: 0.16 },
+        confianza: 80,
         explicacion:
-          'El diferencial técnico es claro. Sin embargo, Ecuador ya mostró en el Mundial 2022 contra Países Bajos que sabe plantarse contra rivales europeos fuertes. El precio del pesimismo extremo es alto.',
+          'Apertura de Mundial en el Azteca, con todos los focos sobre México. Históricamente los anfitriones rara vez pierden el inaugural. Sudáfrica defiende bien pero le cuesta producir en ataque.',
         marcadorEsperado: '2-1',
       },
       {
         ia: 'Gemini',
-        probabilidad: { local: 0.52, empate: 0.26, visitante: 0.22 },
+        probabilidad: { local: 0.55, empate: 0.27, visitante: 0.18 },
         confianza: 72,
         explicacion:
-          'Bélgica favorita por jerarquía, Ecuador competitivo. El partido se define en transiciones; la velocidad ecuatoriana es un activo real frente a una defensa belga lenta en retroceso.',
-        marcadorEsperado: '2-1',
-      },
-    ],
-    probabilidadFinal: { local: 0.54, empate: 0.26, visitante: 0.20 },
-    veredicto: 'consenso',
-    notaVeredicto:
-      'Las tres IAs coinciden: Bélgica favorita por amplio margen, Ecuador con vida pero sin la victoria como escenario probable. La probabilidad final está alineada con el mercado.',
-    cuotaMercado: { local: 0.54, empate: 0.25, visitante: 0.21 },
-  },
-
-  // ── Argentina vs Países Bajos (Grupo D, MD1) ──────────────────────
-  'MD1-D-1': {
-    partidoId: 'MD1-D-1',
-    timestampISO: '2026-06-11T12:00:00Z',
-    probabilidadBase: { local: 0.42, empate: 0.28, visitante: 0.30 },
-    respuestasIA: [
-      {
-        ia: 'Claude',
-        probabilidad: { local: 0.44, empate: 0.30, visitante: 0.26 },
-        confianza: 60,
-        explicacion:
-          'Argentina mantiene base campeona del 2022 pero el peso emocional de la era post-Messi influye en la mentalidad colectiva. Países Bajos siempre incomoda a Argentina; los últimos 5 partidos directos lo confirman.',
-        marcadorEsperado: '2-1',
-      },
-      {
-        ia: 'GPT',
-        probabilidad: { local: 0.48, empate: 0.24, visitante: 0.28 },
-        confianza: 75,
-        explicacion:
-          'Argentina más fuerte en mediocampo y delantera, con recambio generacional consolidado. Países Bajos depende mucho de Gakpo y Frenkie de Jong; si los neutralizan, hay diferencia clara.',
-        marcadorEsperado: '2-0',
-      },
-      {
-        ia: 'Gemini',
-        probabilidad: { local: 0.38, empate: 0.30, visitante: 0.32 },
-        confianza: 65,
-        explicacion:
-          'Históricamente parejos: los últimos 5 cara a cara incluyen los penales del 2022. La estadística predice partido cerrado donde el empate al 90\' es plausible.',
+          'México favorito por diferencial de ranking (1635 vs 1550) y sede. Pero la presión del partido inaugural en Azteca puede pesar; el empate técnico no es absurdo si los Bafana Bafana aguantan los primeros 30 minutos.',
         marcadorEsperado: '1-1',
       },
     ],
-    probabilidadFinal: { local: 0.43, empate: 0.28, visitante: 0.29 },
+    probabilidadFinal: { local: 0.59, empate: 0.25, visitante: 0.16 },
+    veredicto: 'consenso',
+    notaVeredicto:
+      'Las tres IAs coinciden: México favorito claro en su estadio. La duda menor está en el margen — entre 55% y 62% de probabilidad de victoria local.',
+    cuotaMercado: { local: 0.61, empate: 0.24, visitante: 0.15 },
+  },
+
+  // ── Brasil vs Marruecos · Grupo C, MD1 · 13 jun · Gillette ────────
+  'C-MD1-1': {
+    partidoId: 'C-MD1-1',
+    timestampISO: '2026-06-12T12:00:00Z',
+    probabilidadBase: { local: 0.51, empate: 0.27, visitante: 0.22 },
+    respuestasIA: [
+      {
+        ia: 'Claude',
+        probabilidad: { local: 0.46, empate: 0.28, visitante: 0.26 },
+        confianza: 70,
+        explicacion:
+          'Marruecos no es el rival del 2018. Mostró en Qatar 2022 (semifinal) que sabe plantarse contra potencias y su bloque defensivo sigue siendo de los mejores del mundo. Brasil favorito, pero el margen real es menor al que sugiere el ranking.',
+        marcadorEsperado: '1-1',
+      },
+      {
+        ia: 'GPT',
+        probabilidad: { local: 0.58, empate: 0.24, visitante: 0.18 },
+        confianza: 76,
+        explicacion:
+          'Brasil con plantel renovado y la mejor delantera del torneo en papel. Marruecos competitivo pero pierde diferencial cuando enfrenta a equipos que también juegan con tres centrales.',
+        marcadorEsperado: '2-1',
+      },
+      {
+        ia: 'Gemini',
+        probabilidad: { local: 0.49, empate: 0.28, visitante: 0.23 },
+        confianza: 68,
+        explicacion:
+          'Diferencial ELO (1810 vs 1695) marca a Brasil favorita, pero el factor "Marruecos plantea problemas físicos a sudamericanos" se ha repetido en 4 de los últimos 5 cruces de Marruecos vs CONMEBOL.',
+        marcadorEsperado: '1-1',
+      },
+    ],
+    probabilidadFinal: { local: 0.51, empate: 0.27, visitante: 0.22 },
     veredicto: 'desacuerdo',
     notaVeredicto:
-      'Las tres IAs coinciden en que Argentina es favorita, pero discrepan en la magnitud: GPT muy convencido (48%), Gemini casi paridad (38% vs 32%). El desacuerdo está en cuánta ventaja le da cada modelo al plantel albiceleste.',
-    cuotaMercado: { local: 0.50, empate: 0.26, visitante: 0.24 },
+      'GPT ve a Brasil claramente arriba (58%), Claude y Gemini lo ven mucho más parejo (46-49%). El desacuerdo está en cuánto pesa la "lección" del 2022 sobre Marruecos como aguafiestas.',
+    cuotaMercado: { local: 0.62, empate: 0.23, visitante: 0.15 },
     senalValor: {
       direccion: 'visitante',
-      delta: 5,
+      delta: 7,
       explicacion:
-        'El mercado le da a Argentina un 50% de victoria, pero el consenso de las IAs la pone en 43%. Países Bajos a +5 puntos vs mercado podría tener valor.',
+        'El mercado le da a Marruecos sólo 15% de victoria, pero el consenso de las IAs lo pone en 22%. Diferencia de 7 puntos que sugiere que la cuota podría estar valorando demasiado el blasón brasileño y poco la solidez defensiva marroquí.',
     },
+  },
+
+  // ── Costa de Marfil vs Ecuador · Grupo E, MD1 · 14 jun · NRG ──────
+  'E-MD1-2': {
+    partidoId: 'E-MD1-2',
+    timestampISO: '2026-06-13T12:00:00Z',
+    probabilidadBase: { local: 0.34, empate: 0.30, visitante: 0.36 },
+    respuestasIA: [
+      {
+        ia: 'Claude',
+        probabilidad: { local: 0.32, empate: 0.32, visitante: 0.36 },
+        confianza: 60,
+        explicacion:
+          'Partido casi a moneda. Ecuador llega con un proceso largo bajo el mismo entrenador y físico para sostener intensidad; Costa de Marfil tiene más talento individual pero menos cohesión. Empate como escenario muy plausible.',
+        marcadorEsperado: '1-1',
+      },
+      {
+        ia: 'GPT',
+        probabilidad: { local: 0.40, empate: 0.26, visitante: 0.34 },
+        confianza: 65,
+        explicacion:
+          'Costa de Marfil con generación 2024 (campeona de África) en plenitud y mediocampo superior. Ecuador competitivo pero le falta el "10" que cambie partidos cerrados. Marfileños tienen el filo en ataque.',
+        marcadorEsperado: '2-1',
+      },
+      {
+        ia: 'Gemini',
+        probabilidad: { local: 0.28, empate: 0.30, visitante: 0.42 },
+        confianza: 70,
+        explicacion:
+          'Ecuador trae 6 partidos invicto en eliminatorias y un perfil táctico que históricamente complica a equipos africanos (ver Mundial 2022 vs Países Bajos, donde empató). La velocidad por bandas es un activo claro.',
+        marcadorEsperado: '0-1',
+      },
+    ],
+    probabilidadFinal: { local: 0.33, empate: 0.29, visitante: 0.38 },
+    veredicto: 'desacuerdo',
+    notaVeredicto:
+      'Las tres IAs discrepan más sobre Ecuador que sobre Costa de Marfil. Gemini lo ve favorito (42%), GPT lo pone segundo detrás de los marfileños (34%), Claude lo ve casi parejo. Partido para ver con cuidado.',
+    cuotaMercado: { local: 0.38, empate: 0.30, visitante: 0.32 },
+    senalValor: {
+      direccion: 'visitante',
+      delta: 6,
+      explicacion:
+        'El mercado pone a Ecuador en 32% pero el consenso de las IAs lo eleva a 38%. La diferencia podría estar en que las casas pesan más el ranking puro y menos la solidez del proceso ecuatoriano de los últimos 18 meses.',
+    },
+  },
+
+  // ── Argentina vs Argelia · Grupo J, MD1 · 16 jun · Arrowhead ──────
+  'J-MD1-3': {
+    partidoId: 'J-MD1-3',
+    timestampISO: '2026-06-15T12:00:00Z',
+    probabilidadBase: { local: 0.72, empate: 0.18, visitante: 0.10 },
+    respuestasIA: [
+      {
+        ia: 'Claude',
+        probabilidad: { local: 0.72, empate: 0.20, visitante: 0.08 },
+        confianza: 82,
+        explicacion:
+          'Argentina como vigente campeón, con base del 2022 intacta y recambio joven probado en eliminatorias. Argelia es físicamente fuerte pero le faltan jerarquías a la hora de generar gol. Difícil ver otro resultado que no sea triunfo argentino.',
+        marcadorEsperado: '2-0',
+      },
+      {
+        ia: 'GPT',
+        probabilidad: { local: 0.74, empate: 0.16, visitante: 0.10 },
+        confianza: 85,
+        explicacion:
+          'Diferencial Elo enorme (1885 vs 1510). Argentina probablemente rote algunos titulares pero mantiene plantel superior en todas las líneas. Argelia jugará a destruir y eso suele beneficiar al favorito en partidos largos.',
+        marcadorEsperado: '3-0',
+      },
+      {
+        ia: 'Gemini',
+        probabilidad: { local: 0.70, empate: 0.20, visitante: 0.10 },
+        confianza: 80,
+        explicacion:
+          'Argentina favorita amplia. El único asterisco: arranque de torneo con presión de defender el título, y Argelia hace 90 minutos competitivos. Pero el desenlace no debería estar en duda.',
+        marcadorEsperado: '2-1',
+      },
+    ],
+    probabilidadFinal: { local: 0.72, empate: 0.19, visitante: 0.09 },
+    veredicto: 'consenso',
+    notaVeredicto:
+      'Consenso fuerte: Argentina favorita con probabilidad superior al 70% en las tres IAs. Confianza alta (80-85). El mercado coincide.',
+    cuotaMercado: { local: 0.71, empate: 0.20, visitante: 0.09 },
   },
 };
 
@@ -148,8 +191,9 @@ export function prediccionPara(partidoId: string): Prediccion | null {
 // ─── Historial mock ──────────────────────────────────────────────────
 
 /**
- * 6 amistosos jugados en mayo de 2026 con predicciones previas y resultados
- * reales. Mezcla aciertos y fallos a propósito — la transparencia es el producto.
+ * 6 amistosos de mayo de 2026 con predicciones previas y resultados
+ * reales. Mezcla aciertos y fallos a propósito — la transparencia es
+ * el producto. Todos los equipos están en el Mundial 2026.
  */
 
 const partidoAmistoso = (
@@ -189,22 +233,22 @@ export const HISTORIAL: RegistroHistorial[] = [
     acerto: true,
   },
   {
-    partido: partidoAmistoso('AM-2', '2026-05-15T01:00:00Z', 'BRA', 'SEN', 3, 0),
+    partido: partidoAmistoso('AM-2', '2026-05-15T01:00:00Z', 'BRA', 'PAR', 3, 0),
     prediccion: {
       partidoId: 'AM-2',
       timestampISO: '2026-05-13T20:00:00Z',
-      probabilidadBase: { local: 0.55, empate: 0.25, visitante: 0.20 },
+      probabilidadBase: { local: 0.62, empate: 0.20, visitante: 0.18 },
       respuestasIA: [],
-      probabilidadFinal: { local: 0.60, empate: 0.22, visitante: 0.18 },
+      probabilidadFinal: { local: 0.65, empate: 0.20, visitante: 0.15 },
       veredicto: 'consenso',
-      notaVeredicto: 'Brasil favorita por amplio margen.',
+      notaVeredicto: 'Brasil favorita por amplio margen contra una Paraguay en reconstrucción.',
     },
     resultadoPredicho: 'local',
     resultadoReal: 'local',
     acerto: true,
   },
   {
-    partido: partidoAmistoso('AM-3', '2026-05-17T23:00:00Z', 'MEX', 'USA', 1, 1),
+    partido: partidoAmistoso('AM-3', '2026-05-17T23:00:00Z', 'USA', 'MEX', 1, 1),
     prediccion: {
       partidoId: 'AM-3',
       timestampISO: '2026-05-16T20:00:00Z',
@@ -213,23 +257,23 @@ export const HISTORIAL: RegistroHistorial[] = [
       probabilidadFinal: { local: 0.42, empate: 0.26, visitante: 0.32 },
       veredicto: 'desacuerdo',
       notaVeredicto:
-        'Claude veía favorito local, GPT y Gemini lo veían más parejo. Ninguna acertó el empate.',
+        'Claude veía favorita a USA, GPT y Gemini lo veían más parejo. Ninguna acertó el empate.',
     },
     resultadoPredicho: 'local',
     resultadoReal: 'empate',
     acerto: false,
   },
   {
-    partido: partidoAmistoso('AM-4', '2026-05-19T19:00:00Z', 'CRO', 'ITA', 2, 2),
+    partido: partidoAmistoso('AM-4', '2026-05-19T19:00:00Z', 'ENG', 'CRO', 2, 2),
     prediccion: {
       partidoId: 'AM-4',
       timestampISO: '2026-05-18T20:00:00Z',
-      probabilidadBase: { local: 0.36, empate: 0.30, visitante: 0.34 },
+      probabilidadBase: { local: 0.50, empate: 0.28, visitante: 0.22 },
       respuestasIA: [],
-      probabilidadFinal: { local: 0.30, empate: 0.34, visitante: 0.36 },
+      probabilidadFinal: { local: 0.30, empate: 0.40, visitante: 0.30 },
       veredicto: 'desacuerdo',
       notaVeredicto:
-        'Claude apostó por el empate (acertó); GPT y Gemini se fueron por Italia (fallaron).',
+        'Claude apostó por el empate (acertó); GPT y Gemini se fueron por Inglaterra (fallaron).',
     },
     resultadoPredicho: 'empate',
     resultadoReal: 'empate',
@@ -240,12 +284,12 @@ export const HISTORIAL: RegistroHistorial[] = [
     prediccion: {
       partidoId: 'AM-5',
       timestampISO: '2026-05-20T20:00:00Z',
-      probabilidadBase: { local: 0.58, empate: 0.24, visitante: 0.18 },
+      probabilidadBase: { local: 0.62, empate: 0.22, visitante: 0.16 },
       respuestasIA: [],
-      probabilidadFinal: { local: 0.55, empate: 0.25, visitante: 0.20 },
+      probabilidadFinal: { local: 0.58, empate: 0.24, visitante: 0.18 },
       veredicto: 'consenso',
       notaVeredicto:
-        'Las 3 IAs vieron a España favorita y se equivocaron — fallo limpio de consenso.',
+        'Las 3 IAs vieron a España favorita amplia y se equivocaron — fallo limpio de consenso.',
     },
     resultadoPredicho: 'local',
     resultadoReal: 'visitante',
@@ -256,9 +300,9 @@ export const HISTORIAL: RegistroHistorial[] = [
     prediccion: {
       partidoId: 'AM-6',
       timestampISO: '2026-05-22T20:00:00Z',
-      probabilidadBase: { local: 0.42, empate: 0.28, visitante: 0.30 },
+      probabilidadBase: { local: 0.44, empate: 0.28, visitante: 0.28 },
       respuestasIA: [],
-      probabilidadFinal: { local: 0.45, empate: 0.27, visitante: 0.28 },
+      probabilidadFinal: { local: 0.46, empate: 0.27, visitante: 0.27 },
       veredicto: 'desacuerdo',
       notaVeredicto: 'Las IAs vieron a Francia ligeramente favorita; acertó.',
     },

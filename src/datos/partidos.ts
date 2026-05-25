@@ -1,120 +1,186 @@
-import type { Partido, LetraGrupo } from '../tipos';
-import { LETRAS_GRUPOS, equiposDelGrupo } from './grupos';
+import type { Partido, LetraGrupo, FasePartido } from '../tipos';
 
 /**
- * Generación mock del calendario de la fase de grupos del Mundial 2026.
+ * Calendario oficial de la fase de grupos del Mundial 2026.
  *
- * ⚠️ Las fechas y sedes son ilustrativas. El calendario oficial real lo
- * tomaremos en la Fase 4 de football-data.org. Para la UI nos basta
- * con tener 72 partidos repartidos en el rango 11–22 de junio de 2026.
+ * Fuentes: cruzado entre el sorteo final de FIFA (5 de diciembre de 2025) y
+ * el calendario publicado por DAZN. 72 partidos, 11 al 27 de junio de 2026.
  *
- * Reglas de generación dentro de cada grupo de 4 equipos [t1, t2, t3, t4]:
- *   MD1: t1 vs t2  ·  t3 vs t4
- *   MD2: t1 vs t3  ·  t2 vs t4
- *   MD3: t1 vs t4  ·  t2 vs t3
+ * Notas:
+ *   - Las HORAS exactas de kickoff aún no las tomamos del oficial; aquí se
+ *     asignan slots aproximados (16:00 / 19:00 / 22:00 / 01:00 UTC). En la
+ *     Fase 4 las reemplazamos con la hora oficial vía football-data.org.
+ *   - El ID del partido sigue el patrón `GRUPO-MDx-N`, p. ej. `A-MD1-1`.
+ *   - Los nombres de sede en español/inglés respetan el uso común en medios.
  */
 
-/** 16 sedes anunciadas para el Mundial 2026. */
-const SEDES = [
-  // México
-  { ciudad: 'Estadio Azteca, CDMX',            pais: 'México' as const },
-  { ciudad: 'Estadio Akron, Guadalajara',      pais: 'México' as const },
-  { ciudad: 'BBVA, Monterrey',                 pais: 'México' as const },
-  // Estados Unidos
-  { ciudad: 'MetLife Stadium, Nueva York',     pais: 'Estados Unidos' as const },
-  { ciudad: 'SoFi Stadium, Los Ángeles',       pais: 'Estados Unidos' as const },
-  { ciudad: 'AT&T Stadium, Dallas',            pais: 'Estados Unidos' as const },
-  { ciudad: 'NRG Stadium, Houston',            pais: 'Estados Unidos' as const },
-  { ciudad: 'Mercedes-Benz, Atlanta',          pais: 'Estados Unidos' as const },
-  { ciudad: 'Gillette, Boston',                pais: 'Estados Unidos' as const },
-  { ciudad: 'Arrowhead, Kansas City',          pais: 'Estados Unidos' as const },
-  { ciudad: 'Hard Rock, Miami',                pais: 'Estados Unidos' as const },
-  { ciudad: 'Lincoln Financial, Filadelfia',   pais: 'Estados Unidos' as const },
-  { ciudad: 'Levi\'s Stadium, San Francisco',  pais: 'Estados Unidos' as const },
-  { ciudad: 'Lumen Field, Seattle',            pais: 'Estados Unidos' as const },
-  // Canadá
-  { ciudad: 'BMO Field, Toronto',              pais: 'Canadá' as const },
-  { ciudad: 'BC Place, Vancouver',             pais: 'Canadá' as const },
+type FixtureCrudo = {
+  fecha: string;        // 'YYYY-MM-DD' del día del partido (zona local de la sede)
+  grupo: LetraGrupo;
+  matchday: 1 | 2 | 3;
+  ordenEnElDia: 1 | 2 | 3 | 4 | 5 | 6;
+  local: string;
+  visitante: string;
+  sede: string;
+  paisAnfitrion: 'México' | 'Estados Unidos' | 'Canadá';
+};
+
+/**
+ * Slots UTC por orden dentro del día. Si un día tiene 4 partidos,
+ * se usan los slots 1-4. Distribuye los kickoffs a lo largo de la
+ * tarde-noche en EEUU/CDMX/Toronto.
+ */
+const SLOTS_UTC = [
+  '16:00', // mediodía costa este EEUU
+  '19:00',
+  '22:00',
+  '01:00', // ya día siguiente UTC; se compensa abajo
+  '04:00',
+  '07:00',
 ];
 
 /**
- * Fechas base por matchday (UTC). Cada matchday cubre 4 días con 6
- * partidos por día.
+ * Lista cruda de los 72 partidos, en orden cronológico.
+ * Tomada directamente del calendario oficial publicado.
  */
-const FECHAS_BASE_UTC = {
-  MD1: '2026-06-11',
-  MD2: '2026-06-17',
-  MD3: '2026-06-21',
-};
+const FIXTURES: FixtureCrudo[] = [
+  // ── Día 1 · Jueves 11 de junio ────────────────────────────────────
+  { fecha: '2026-06-11', grupo: 'A', matchday: 1, ordenEnElDia: 1, local: 'MEX', visitante: 'RSA', sede: 'Estadio Azteca, CDMX',          paisAnfitrion: 'México' },
+  { fecha: '2026-06-11', grupo: 'A', matchday: 1, ordenEnElDia: 2, local: 'KOR', visitante: 'CZE', sede: 'Estadio Akron, Guadalajara',    paisAnfitrion: 'México' },
 
-/** Horarios de cada partido del día, en UTC (mediodía a 9pm CDMX). */
-const HORARIOS_UTC = ['18:00', '21:00', '00:00', '03:00'] as const;
+  // ── Día 2 · Viernes 12 de junio ───────────────────────────────────
+  { fecha: '2026-06-12', grupo: 'B', matchday: 1, ordenEnElDia: 1, local: 'CAN', visitante: 'BIH', sede: 'BMO Field, Toronto',            paisAnfitrion: 'Canadá' },
+  { fecha: '2026-06-12', grupo: 'B', matchday: 1, ordenEnElDia: 2, local: 'QAT', visitante: 'SUI', sede: "Levi's Stadium, San Francisco", paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-12', grupo: 'D', matchday: 1, ordenEnElDia: 3, local: 'USA', visitante: 'PAR', sede: 'SoFi Stadium, Los Ángeles',     paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-12', grupo: 'D', matchday: 1, ordenEnElDia: 4, local: 'AUS', visitante: 'TUR', sede: 'BC Place, Vancouver',           paisAnfitrion: 'Canadá' },
+
+  // ── Día 3 · Sábado 13 de junio ────────────────────────────────────
+  { fecha: '2026-06-13', grupo: 'C', matchday: 1, ordenEnElDia: 1, local: 'BRA', visitante: 'MAR', sede: 'Gillette Stadium, Boston',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-13', grupo: 'C', matchday: 1, ordenEnElDia: 2, local: 'HAI', visitante: 'SCO', sede: 'MetLife Stadium, Nueva York',   paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 4 · Domingo 14 de junio ───────────────────────────────────
+  { fecha: '2026-06-14', grupo: 'E', matchday: 1, ordenEnElDia: 1, local: 'GER', visitante: 'CUW', sede: 'Lincoln Financial, Filadelfia', paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-14', grupo: 'E', matchday: 1, ordenEnElDia: 2, local: 'CIV', visitante: 'ECU', sede: 'NRG Stadium, Houston',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-14', grupo: 'F', matchday: 1, ordenEnElDia: 3, local: 'NED', visitante: 'JPN', sede: 'AT&T Stadium, Dallas',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-14', grupo: 'F', matchday: 1, ordenEnElDia: 4, local: 'SWE', visitante: 'TUN', sede: 'Estadio BBVA, Monterrey',       paisAnfitrion: 'México' },
+
+  // ── Día 5 · Lunes 15 de junio ─────────────────────────────────────
+  { fecha: '2026-06-15', grupo: 'G', matchday: 1, ordenEnElDia: 1, local: 'BEL', visitante: 'EGY', sede: 'SoFi Stadium, Los Ángeles',     paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-15', grupo: 'G', matchday: 1, ordenEnElDia: 2, local: 'IRN', visitante: 'NZL', sede: 'Lumen Field, Seattle',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-15', grupo: 'H', matchday: 1, ordenEnElDia: 3, local: 'ESP', visitante: 'CPV', sede: 'Hard Rock Stadium, Miami',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-15', grupo: 'H', matchday: 1, ordenEnElDia: 4, local: 'KSA', visitante: 'URU', sede: 'Mercedes-Benz, Atlanta',        paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 6 · Martes 16 de junio ────────────────────────────────────
+  { fecha: '2026-06-16', grupo: 'I', matchday: 1, ordenEnElDia: 1, local: 'FRA', visitante: 'SEN', sede: 'MetLife Stadium, Nueva York',   paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-16', grupo: 'I', matchday: 1, ordenEnElDia: 2, local: 'IRQ', visitante: 'NOR', sede: 'Gillette Stadium, Boston',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-16', grupo: 'J', matchday: 1, ordenEnElDia: 3, local: 'ARG', visitante: 'ALG', sede: 'Arrowhead, Kansas City',        paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-16', grupo: 'J', matchday: 1, ordenEnElDia: 4, local: 'AUT', visitante: 'JOR', sede: "Levi's Stadium, San Francisco", paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 7 · Miércoles 17 de junio ─────────────────────────────────
+  { fecha: '2026-06-17', grupo: 'K', matchday: 1, ordenEnElDia: 1, local: 'POR', visitante: 'COD', sede: 'NRG Stadium, Houston',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-17', grupo: 'K', matchday: 1, ordenEnElDia: 2, local: 'UZB', visitante: 'COL', sede: 'Estadio Azteca, CDMX',          paisAnfitrion: 'México' },
+  { fecha: '2026-06-17', grupo: 'L', matchday: 1, ordenEnElDia: 3, local: 'ENG', visitante: 'CRO', sede: 'BMO Field, Toronto',            paisAnfitrion: 'Canadá' },
+  { fecha: '2026-06-17', grupo: 'L', matchday: 1, ordenEnElDia: 4, local: 'GHA', visitante: 'PAN', sede: 'AT&T Stadium, Dallas',          paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 8 · Jueves 18 de junio · MD2 inicia ───────────────────────
+  { fecha: '2026-06-18', grupo: 'A', matchday: 2, ordenEnElDia: 1, local: 'CZE', visitante: 'RSA', sede: 'Mercedes-Benz, Atlanta',        paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-18', grupo: 'A', matchday: 2, ordenEnElDia: 2, local: 'MEX', visitante: 'KOR', sede: 'Estadio Akron, Guadalajara',    paisAnfitrion: 'México' },
+  { fecha: '2026-06-18', grupo: 'B', matchday: 2, ordenEnElDia: 3, local: 'SUI', visitante: 'BIH', sede: 'SoFi Stadium, Los Ángeles',     paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-18', grupo: 'B', matchday: 2, ordenEnElDia: 4, local: 'CAN', visitante: 'QAT', sede: 'BC Place, Vancouver',           paisAnfitrion: 'Canadá' },
+
+  // ── Día 9 · Viernes 19 de junio ───────────────────────────────────
+  { fecha: '2026-06-19', grupo: 'C', matchday: 2, ordenEnElDia: 1, local: 'BRA', visitante: 'HAI', sede: 'Lincoln Financial, Filadelfia', paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-19', grupo: 'C', matchday: 2, ordenEnElDia: 2, local: 'SCO', visitante: 'MAR', sede: 'Gillette Stadium, Boston',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-19', grupo: 'D', matchday: 2, ordenEnElDia: 3, local: 'TUR', visitante: 'PAR', sede: "Levi's Stadium, San Francisco", paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-19', grupo: 'D', matchday: 2, ordenEnElDia: 4, local: 'USA', visitante: 'AUS', sede: 'Lumen Field, Seattle',          paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 10 · Sábado 20 de junio ───────────────────────────────────
+  { fecha: '2026-06-20', grupo: 'E', matchday: 2, ordenEnElDia: 1, local: 'GER', visitante: 'CIV', sede: 'BMO Field, Toronto',            paisAnfitrion: 'Canadá' },
+  { fecha: '2026-06-20', grupo: 'E', matchday: 2, ordenEnElDia: 2, local: 'ECU', visitante: 'CUW', sede: 'Arrowhead, Kansas City',        paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-20', grupo: 'F', matchday: 2, ordenEnElDia: 3, local: 'NED', visitante: 'SWE', sede: 'NRG Stadium, Houston',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-20', grupo: 'F', matchday: 2, ordenEnElDia: 4, local: 'TUN', visitante: 'JPN', sede: 'Estadio BBVA, Monterrey',       paisAnfitrion: 'México' },
+
+  // ── Día 11 · Domingo 21 de junio ──────────────────────────────────
+  { fecha: '2026-06-21', grupo: 'G', matchday: 2, ordenEnElDia: 1, local: 'BEL', visitante: 'IRN', sede: 'SoFi Stadium, Los Ángeles',     paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-21', grupo: 'G', matchday: 2, ordenEnElDia: 2, local: 'NZL', visitante: 'EGY', sede: 'BC Place, Vancouver',           paisAnfitrion: 'Canadá' },
+  { fecha: '2026-06-21', grupo: 'H', matchday: 2, ordenEnElDia: 3, local: 'ESP', visitante: 'KSA', sede: 'Hard Rock Stadium, Miami',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-21', grupo: 'H', matchday: 2, ordenEnElDia: 4, local: 'URU', visitante: 'CPV', sede: 'Mercedes-Benz, Atlanta',        paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 12 · Lunes 22 de junio ────────────────────────────────────
+  { fecha: '2026-06-22', grupo: 'I', matchday: 2, ordenEnElDia: 1, local: 'FRA', visitante: 'IRQ', sede: 'MetLife Stadium, Nueva York',   paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-22', grupo: 'I', matchday: 2, ordenEnElDia: 2, local: 'NOR', visitante: 'SEN', sede: 'Lincoln Financial, Filadelfia', paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-22', grupo: 'J', matchday: 2, ordenEnElDia: 3, local: 'ARG', visitante: 'AUT', sede: 'AT&T Stadium, Dallas',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-22', grupo: 'J', matchday: 2, ordenEnElDia: 4, local: 'JOR', visitante: 'ALG', sede: "Levi's Stadium, San Francisco", paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 13 · Martes 23 de junio ───────────────────────────────────
+  { fecha: '2026-06-23', grupo: 'K', matchday: 2, ordenEnElDia: 1, local: 'POR', visitante: 'UZB', sede: 'NRG Stadium, Houston',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-23', grupo: 'K', matchday: 2, ordenEnElDia: 2, local: 'COL', visitante: 'COD', sede: 'Estadio Akron, Guadalajara',    paisAnfitrion: 'México' },
+  { fecha: '2026-06-23', grupo: 'L', matchday: 2, ordenEnElDia: 3, local: 'ENG', visitante: 'GHA', sede: 'Gillette Stadium, Boston',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-23', grupo: 'L', matchday: 2, ordenEnElDia: 4, local: 'PAN', visitante: 'CRO', sede: 'BMO Field, Toronto',            paisAnfitrion: 'Canadá' },
+
+  // ── Día 14 · Miércoles 24 de junio · MD3 inicia ───────────────────
+  { fecha: '2026-06-24', grupo: 'A', matchday: 3, ordenEnElDia: 1, local: 'CZE', visitante: 'MEX', sede: 'Estadio Azteca, CDMX',          paisAnfitrion: 'México' },
+  { fecha: '2026-06-24', grupo: 'A', matchday: 3, ordenEnElDia: 2, local: 'RSA', visitante: 'KOR', sede: 'Estadio BBVA, Monterrey',       paisAnfitrion: 'México' },
+  { fecha: '2026-06-24', grupo: 'B', matchday: 3, ordenEnElDia: 3, local: 'SUI', visitante: 'CAN', sede: 'BC Place, Vancouver',           paisAnfitrion: 'Canadá' },
+  { fecha: '2026-06-24', grupo: 'B', matchday: 3, ordenEnElDia: 4, local: 'BIH', visitante: 'QAT', sede: 'Lumen Field, Seattle',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-24', grupo: 'C', matchday: 3, ordenEnElDia: 5, local: 'SCO', visitante: 'BRA', sede: 'Hard Rock Stadium, Miami',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-24', grupo: 'C', matchday: 3, ordenEnElDia: 6, local: 'MAR', visitante: 'HAI', sede: 'Mercedes-Benz, Atlanta',        paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 15 · Jueves 25 de junio ───────────────────────────────────
+  { fecha: '2026-06-25', grupo: 'D', matchday: 3, ordenEnElDia: 1, local: 'TUR', visitante: 'USA', sede: 'SoFi Stadium, Los Ángeles',     paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-25', grupo: 'D', matchday: 3, ordenEnElDia: 2, local: 'PAR', visitante: 'AUS', sede: "Levi's Stadium, San Francisco", paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-25', grupo: 'E', matchday: 3, ordenEnElDia: 3, local: 'ECU', visitante: 'GER', sede: 'Lincoln Financial, Filadelfia', paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-25', grupo: 'E', matchday: 3, ordenEnElDia: 4, local: 'CUW', visitante: 'CIV', sede: 'MetLife Stadium, Nueva York',   paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-25', grupo: 'F', matchday: 3, ordenEnElDia: 5, local: 'TUN', visitante: 'NED', sede: 'AT&T Stadium, Dallas',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-25', grupo: 'F', matchday: 3, ordenEnElDia: 6, local: 'JPN', visitante: 'SWE', sede: 'Arrowhead, Kansas City',        paisAnfitrion: 'Estados Unidos' },
+
+  // ── Día 16 · Viernes 26 de junio ──────────────────────────────────
+  { fecha: '2026-06-26', grupo: 'G', matchday: 3, ordenEnElDia: 1, local: 'NZL', visitante: 'BEL', sede: 'Lumen Field, Seattle',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-26', grupo: 'G', matchday: 3, ordenEnElDia: 2, local: 'EGY', visitante: 'IRN', sede: 'BC Place, Vancouver',           paisAnfitrion: 'Canadá' },
+  { fecha: '2026-06-26', grupo: 'H', matchday: 3, ordenEnElDia: 3, local: 'URU', visitante: 'ESP', sede: 'NRG Stadium, Houston',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-26', grupo: 'H', matchday: 3, ordenEnElDia: 4, local: 'CPV', visitante: 'KSA', sede: 'Estadio Akron, Guadalajara',    paisAnfitrion: 'México' },
+  { fecha: '2026-06-26', grupo: 'I', matchday: 3, ordenEnElDia: 5, local: 'NOR', visitante: 'FRA', sede: 'Gillette Stadium, Boston',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-26', grupo: 'I', matchday: 3, ordenEnElDia: 6, local: 'SEN', visitante: 'IRQ', sede: 'BMO Field, Toronto',            paisAnfitrion: 'Canadá' },
+
+  // ── Día 17 · Sábado 27 de junio · cierre de grupos ────────────────
+  { fecha: '2026-06-27', grupo: 'J', matchday: 3, ordenEnElDia: 1, local: 'JOR', visitante: 'ARG', sede: 'Arrowhead, Kansas City',        paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-27', grupo: 'J', matchday: 3, ordenEnElDia: 2, local: 'ALG', visitante: 'AUT', sede: 'AT&T Stadium, Dallas',          paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-27', grupo: 'K', matchday: 3, ordenEnElDia: 3, local: 'COL', visitante: 'POR', sede: 'Hard Rock Stadium, Miami',      paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-27', grupo: 'K', matchday: 3, ordenEnElDia: 4, local: 'COD', visitante: 'UZB', sede: 'Mercedes-Benz, Atlanta',        paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-27', grupo: 'L', matchday: 3, ordenEnElDia: 5, local: 'PAN', visitante: 'ENG', sede: 'MetLife Stadium, Nueva York',   paisAnfitrion: 'Estados Unidos' },
+  { fecha: '2026-06-27', grupo: 'L', matchday: 3, ordenEnElDia: 6, local: 'CRO', visitante: 'GHA', sede: 'Lincoln Financial, Filadelfia', paisAnfitrion: 'Estados Unidos' },
+];
 
 /**
- * Genera los 6 partidos de un grupo dado, repartidos en MD1/MD2/MD3.
- * El índice del grupo (0..11) define el offset de día dentro del matchday.
+ * Construye el timestamp ISO UTC de un partido a partir de su fecha local
+ * y su orden en el día. Los slots 1..3 caen en el mismo día UTC; los slots
+ * 4..6 caen al día siguiente UTC (kickoffs nocturnos).
  */
-function partidosDeGrupo(letra: LetraGrupo, indiceGrupo: number): Partido[] {
-  const [t1, t2, t3, t4] = equiposDelGrupo(letra);
-  const partidos: Partido[] = [];
-
-  // Cada matchday se reparte en 4 días: 3 grupos por día (12 grupos / 4 días).
-  const diaOffsetDentroMD = indiceGrupo % 4;
-  // Cada par de partidos del mismo grupo en el mismo MD se separa por slots.
-  const slotsPorMD: [number, number] = indiceGrupo < 4 ? [0, 2] : indiceGrupo < 8 ? [1, 3] : [0, 2];
-
-  const enfrentamientos = [
-    { md: 'MD1' as const, locales: [t1, t3], visitantes: [t2, t4] },
-    { md: 'MD2' as const, locales: [t1, t2], visitantes: [t3, t4] },
-    { md: 'MD3' as const, locales: [t1, t2], visitantes: [t4, t3] },
-  ];
-
-  let contador = 1;
-  for (const { md, locales, visitantes } of enfrentamientos) {
-    for (let i = 0; i < 2; i++) {
-      const local = locales[i];
-      const visitante = visitantes[i];
-      const fechaBase = new Date(FECHAS_BASE_UTC[md] + 'T00:00:00Z');
-      fechaBase.setUTCDate(fechaBase.getUTCDate() + diaOffsetDentroMD);
-      const [hh, mm] = HORARIOS_UTC[slotsPorMD[i]].split(':').map(Number);
-      fechaBase.setUTCHours(hh, mm, 0, 0);
-
-      // Sede: rotamos por el array para que cada grupo use distintas.
-      // El partido inaugural del torneo (MEX vs CRO, MD1) lo forzamos en Azteca.
-      const indiceSede = (indiceGrupo * 6 + contador - 1) % SEDES.length;
-      let sede = SEDES[indiceSede];
-      if (letra === 'A' && md === 'MD1' && local.id === 'MEX') {
-        sede = SEDES[0]; // Azteca
-      }
-
-      partidos.push({
-        id: `${md}-${letra}-${contador}`,
-        fechaISO: fechaBase.toISOString(),
-        sede: sede.ciudad,
-        paisAnfitrion: sede.pais,
-        equipoLocalId: local.id,
-        equipoVisitanteId: visitante.id,
-        fase: 'grupos',
-        grupo: letra,
-        estado: 'programado',
-      });
-      contador++;
-    }
-  }
-
-  return partidos;
+function timestampUTC(fecha: string, ordenEnElDia: number): string {
+  const slot = SLOTS_UTC[ordenEnElDia - 1];
+  if (!slot) throw new Error(`Slot inválido: ${ordenEnElDia}`);
+  const sumarDia = ordenEnElDia >= 4;
+  const base = new Date(`${fecha}T00:00:00Z`);
+  if (sumarDia) base.setUTCDate(base.getUTCDate() + 1);
+  const [hh, mm] = slot.split(':').map(Number);
+  base.setUTCHours(hh, mm, 0, 0);
+  return base.toISOString();
 }
 
-/**
- * Calendario completo de la fase de grupos (72 partidos), ordenado por fecha.
- */
-export const PARTIDOS: Partido[] = LETRAS_GRUPOS.flatMap((letra, indice) =>
-  partidosDeGrupo(letra, indice)
-).sort((a, b) => a.fechaISO.localeCompare(b.fechaISO));
+/** Calendario completo de la fase de grupos (72 partidos). */
+export const PARTIDOS: Partido[] = FIXTURES.map((fixture): Partido => ({
+  id: `${fixture.grupo}-MD${fixture.matchday}-${fixture.ordenEnElDia}`,
+  fechaISO: timestampUTC(fixture.fecha, fixture.ordenEnElDia),
+  sede: fixture.sede,
+  paisAnfitrion: fixture.paisAnfitrion,
+  equipoLocalId: fixture.local,
+  equipoVisitanteId: fixture.visitante,
+  fase: 'grupos' satisfies FasePartido,
+  grupo: fixture.grupo,
+  estado: 'programado',
+})).sort((a, b) => a.fechaISO.localeCompare(b.fechaISO));
 
-/**
- * Índice por ID para acceso O(1) — usado en la página de detalle.
- */
+/** Índice por ID para acceso O(1). */
 export const PARTIDOS_POR_ID: Record<string, Partido> = Object.fromEntries(
   PARTIDOS.map((partido) => [partido.id, partido])
 );

@@ -92,8 +92,9 @@ function Inicio() {
           Estado del proyecto
         </p>
         <p className="mt-2 text-marca-grisTexto">
-          Fase 1: UI completa con datos mock. Las predicciones reales con
-          las 3 IAs se conectan en Fase 3, antes del{' '}
+          Fase 1: UI completa con los 48 equipos y 72 partidos reales del
+          sorteo oficial. Las predicciones de las 3 IAs entran en Fase 3,
+          antes del{' '}
           <strong className="text-marca-tinta">11 de junio de 2026</strong>.
         </p>
       </section>
