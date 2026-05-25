@@ -45,8 +45,8 @@ test('Invariante: todas las probabilidades caen en [0, 1]', () => {
 // ─── Casos específicos ───────────────────────────────────────────────
 
 test('Favorito amplio: Argentina vs Argelia (Δ ~400 Elo)', () => {
-  const partido = partidoPorId('J-MD1-3')!;
-  assert.ok(partido, 'Partido J-MD1-3 debe existir');
+  const partido = partidoPorId('J-MD1-1')!;
+  assert.ok(partido, 'Partido J-MD1-1 debe existir');
   const { probabilidad } = calcularProbabilidadBase(partido);
   assert.ok(
     probabilidad.local >= 0.75,
@@ -73,14 +73,14 @@ test('Anfitrión recibe bonus grande: México vs Sudáfrica en el Azteca', () =>
   );
 });
 
-test('Local no-anfitrión recibe bonus nominal: CIV vs ECU en Houston', () => {
+test('Local no-anfitrión NO recibe bonus en sede neutral: CIV vs ECU en Filadelfia', () => {
   const partido = partidoPorId('E-MD1-2')!;
   const { desglose } = calcularProbabilidadBase(partido);
 
   assert.equal(
     desglose.bonusSedeLocal,
-    20,
-    'Costa de Marfil no es anfitrión; bonus nominal = 20'
+    0,
+    'En sede neutral nadie es local — bonus 0 (la designación FIFA es admin)'
   );
 });
 
@@ -131,7 +131,7 @@ test('Empate es mayor en partidos parejos que en desniveles', () => {
   // Parejo: CIV 1600 vs ECU 1610
   const parejo = partidoPorId('E-MD1-2')!;
   // Desnivel: ARG 1885 vs ALG 1510
-  const desnivel = partidoPorId('J-MD1-3')!;
+  const desnivel = partidoPorId('J-MD1-1')!;
 
   const { probabilidad: probParejo } = calcularProbabilidadBase(parejo);
   const { probabilidad: probDesnivel } = calcularProbabilidadBase(desnivel);

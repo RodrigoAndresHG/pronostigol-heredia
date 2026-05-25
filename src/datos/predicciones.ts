@@ -106,7 +106,7 @@ const PREDICCIONES_RAW: PrediccionSinBase[] = [
     },
   },
 
-  // ── Costa de Marfil vs Ecuador · Grupo E, MD1 · 14 jun · NRG ──────
+  // ── Costa de Marfil vs Ecuador · Grupo E, MD1 · 14 jun · Filadelfia ─
   {
     partidoId: 'E-MD1-2',
     timestampISO: '2026-06-13T12:00:00Z',
@@ -151,7 +151,7 @@ const PREDICCIONES_RAW: PrediccionSinBase[] = [
 
   // ── Argentina vs Argelia · Grupo J, MD1 · 16 jun · Arrowhead ──────
   {
-    partidoId: 'J-MD1-3',
+    partidoId: 'J-MD1-1',
     timestampISO: '2026-06-15T12:00:00Z',
     respuestasIA: [
       {

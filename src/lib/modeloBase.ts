@@ -12,8 +12,9 @@ import { equipoPorId } from '../datos/equipos.ts';
  * Factores que entran:
  *   1. Diferencia de rating tipo Elo entre los dos equipos.
  *   2. Ventaja de sede:
- *        - Anfitrión jugando en su país      → +120 Elo
- *        - Cualquier otro "local" del partido → +20 Elo
+ *        - Anfitrión jugando en su país (MEX/USA/CAN) → +120 Elo
+ *        - Cualquier otro "local" en sede neutral     → 0 Elo
+ *          (la designación FIFA es admin, no realidad de cancha)
  *   3. Forma reciente (−1..+1, opcional)    → ±40 Elo cuando = ±1
  *   4. Días de descanso (penaliza <4 días)  → −15 Elo por día corto
  *
@@ -34,8 +35,17 @@ import { equipoPorId } from '../datos/equipos.ts';
 
 /** Bonus de Elo por jugar en el país anfitrión propio (MEX, USA, CAN). */
 const BONUS_ANFITRION = 120;
-/** Bonus nominal para el equipo designado como "local" cuando no es anfitrión. */
-const BONUS_LOCAL_NOMINAL = 20;
+/**
+ * Bonus para el equipo designado como "local" cuando NO es anfitrión.
+ *
+ * Lo dejamos en 0 a propósito: en partidos en sede neutral (ej. CIV vs ECU
+ * en Filadelfia, partido en el que ninguno es de casa), la designación FIFA
+ * de "local" es puramente administrativa por rotación de potes y no implica
+ * ventaja real. El "efecto vestidor / coin-toss" es marginal y no merece
+ * pesar en una probabilidad pública. Si en el futuro quieres modelar
+ * diáspora (p. ej. Colombia jugando en Miami), súbelo a 5-10.
+ */
+const BONUS_LOCAL_NOMINAL = 0;
 /** Cuánto pesa la forma reciente (−1..+1) en Elo. */
 const PESO_FORMA = 40;
 /** Penalización por cada día de descanso por debajo del umbral. */
