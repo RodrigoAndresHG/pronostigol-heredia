@@ -131,31 +131,62 @@ pronostigol-heredia/
 
 ---
 
-## Cómo usar las 3 IAs en local
+## Modelo "publicación" — quién genera vs quién lee
 
-Para que las predicciones funcionen también con `npm run dev` (no sólo
-en Vercel), el repo incluye un plugin de Vite que monta los handlers
-de `/api/*` como middleware. **No necesitas `vercel dev`**.
+Las predicciones funcionan en un modelo editorial:
 
-1. Pon tus 3 claves en `.env.local`:
-   ```env
-   ANTHROPIC_API_KEY=sk-ant-...
-   OPENAI_API_KEY=sk-...
-   GOOGLE_API_KEY=...
-   ```
-2. (Opcional) Si quieres usar versiones específicas de modelos:
-   ```env
-   MODELO_CLAUDE=claude-sonnet-4-5-20250929
-   MODELO_GPT=gpt-4o
-   MODELO_GEMINI=gemini-2.5-flash
-   ```
-3. `npm run dev` y entra a la pantalla de detalle de cualquier partido
-   sin predicción mock (p. ej. `/partido/B-MD1-1`). El botón "Consultar
-   a las 3 IAs" dispara la llamada.
+- **Tú generas** (admin con código). Disparas las 3 IAs cuando quieras.
+- **El público lee.** Cualquiera que entra al partido ve la última
+  predicción publicada con su timestamp. Cero tokens quemados.
+- **Se guarda en Supabase.** Cada generación inserta una fila nueva
+  (no sobreescribe) — el historial queda auditable.
 
-Sin claves, el endpoint responde con 200 y muestra cada IA con su
-error explícito ("ANTHROPIC_API_KEY no configurada"). La UI lo pinta
-en cada tarjeta — graceful degradation.
+### Setup de Supabase (~10 min, una vez)
+
+1. Crea un proyecto en `supabase.com` (nombre: `pronostigol-heredia`).
+2. **SQL Editor → New query**: pega el contenido de `supabase/schema.sql`
+   y dale Run. Verifica que aparezca la tabla `predicciones` en el
+   Table Editor.
+3. **Project Settings → API**: anota
+   - Project URL → `VITE_SUPABASE_URL`
+   - service_role key → `SUPABASE_SERVICE_ROLE_KEY` (NUNCA al frontend)
+
+### Setup del código admin
+
+Genera un código aleatorio largo:
+```bash
+openssl rand -hex 32
+```
+Y mételo en `.env.local` como `CODIGO_ADMIN`. Mínimo 16 caracteres
+(el backend rechaza claves cortas).
+
+### `.env.local` completa para empezar
+
+```env
+# Las 3 IAs
+ANTHROPIC_API_KEY=sk-ant-...
+OPENAI_API_KEY=sk-...
+GOOGLE_API_KEY=...
+
+# Supabase
+VITE_SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+
+# Tu código admin
+CODIGO_ADMIN=<resultado de openssl rand -hex 32>
+```
+
+### Flujo en local
+
+1. `npm run dev`.
+2. Abre `http://localhost:5173/partido/A-MD1-1?admin=<tu-codigo-admin>`.
+   El query param se guarda en localStorage y se limpia de la URL.
+3. Verás la banda "🔐 Modo admin" y el botón "Generar y publicar predicción".
+4. Tocas el botón. 5-20 segundos después la predicción está publicada.
+5. Cierra sesión o abre una ventana incognito: verás la misma predicción
+   pero sin botón — eres "el público" ahora.
+
+Sin `?admin=...`, eres visitante. Sólo ves las predicciones publicadas.
 
 ---
 
@@ -167,6 +198,7 @@ en cada tarjeta — graceful degradation.
 | 1    | UI completa con dataset oficial (48 equipos, 72 partidos) | ✅  |
 | 2    | Modelo base de probabilidad (Elo + sede + forma + descanso) | ✅ |
 | 3    | Backend serverless con las 3 IAs + síntesis           | ✅      |
+| 3.5  | Modelo publicación: admin genera, Supabase persiste, público lee | ✅ |
 | 4    | Datos reales de fútbol y cuotas de mercado            | ⏳      |
 | 5    | Supabase: persistencia + historial real               | ⏳      |
 | 6    | Compartir, íconos PWA, pulido visual                  | ⏳      |

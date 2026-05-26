@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { partidoPorId } from '../datos/partidos.ts';
 import { equipoPorId } from '../datos/equipos.ts';
-import { prediccionPara } from '../datos/predicciones.ts';
 import { calcularProbabilidadBase } from '../lib/modeloBase.ts';
-import { usePrediccionApi } from '../lib/usePrediccionApi.ts';
+import { useAdmin } from '../lib/useAdmin.ts';
+import { usePrediccionApi, type EstadoApi } from '../lib/usePrediccionApi.ts';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 import BarraProbabilidad from '../componentes/BarraProbabilidad';
 import TarjetaIA from '../componentes/TarjetaIA';
@@ -12,39 +12,39 @@ import TarjetaIASkeleton from '../componentes/TarjetaIASkeleton';
 import VeredictoSintesis from '../componentes/VeredictoSintesis';
 import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
+import type { Prediccion } from '../tipos';
 
 /**
- * Página de detalle del partido — la pieza central de la app.
+ * Página de detalle del partido — modelo "publicación".
  *
- * Composición:
- *   1. Cabecera con los dos equipos y la hora local.
- *   2. Capa 1 — Probabilidad base del modelo (siempre disponible).
- *   3. Expandible "Cómo lo calculó".
- *   4. Capa 2 — Las 3 IAs. Si el partido tiene mock, se muestra directo.
- *      Si no, se muestra un botón "Consultar a las 3 IAs" que dispara
- *      la llamada a /api/predecir. Mientras carga, se ven skeletons.
- *   5. Señal de valor (cuando la haya, Fase 4 la rellena con mercado real).
- *   6. Botón de compartir (placeholder de Fase 6).
+ * El público lee la última predicción publicada (GET /api/predecir).
+ * Sólo el admin con el código en localStorage puede generar/regenerar
+ * (POST /api/predecir + X-Codigo-Admin).
+ *
+ * Estructura visual:
+ *   1. Banda admin (sólo si hay código activo) con opción de cerrar sesión.
+ *   2. Cabecera del partido.
+ *   3. Capa 1 — probabilidad base del modelo (siempre disponible).
+ *   4. Expandible "¿Cómo lo calculó la Capa 1?"
+ *   5. Capa 2 — depende del estado (carga / publicada / pendiente / error)
+ *      y de si el usuario es admin o visitante.
  */
 function DetallePartido() {
   const { idPartido } = useParams();
   const partido = idPartido ? partidoPorId(idPartido) : undefined;
+  const { codigoAdmin, cerrarSesion } = useAdmin();
 
-  // Capa 1 — instantánea, depende sólo del partido.
+  // Capa 1 — siempre disponible, no depende de Supabase ni IAs.
   const modelo = useMemo(
     () => (partido ? calcularProbabilidadBase(partido) : null),
     [partido]
   );
 
-  // Si hay predicción mock para este partido, la usamos. Si no, dejamos
-  // que el hook gestione la llamada al backend.
-  const prediccionMock = partido ? prediccionPara(partido.id) : null;
-  const { estado, generar, reiniciar } = usePrediccionApi(partido?.id);
-
-  // La "predicción efectiva" prioriza el mock (demos/casos pre-cargados).
-  // Si no hay mock pero el API ya respondió, usamos esa.
-  const prediccionEfectiva =
-    prediccionMock ?? (estado.tipo === 'ok' ? estado.prediccion : null);
+  // Capa 2 — la traemos de Supabase (público) o la generamos (admin).
+  const { estado, generar, generando } = usePrediccionApi(
+    partido?.id,
+    codigoAdmin
+  );
 
   // Manejo defensivo: ID inexistente.
   if (!partido || !modelo) {
@@ -66,16 +66,21 @@ function DetallePartido() {
   const local = equipoPorId(partido.equipoLocalId);
   const visitante = equipoPorId(partido.equipoVisitanteId);
   const probabilidadBase =
-    prediccionEfectiva?.probabilidadBase ?? modelo.probabilidad;
+    estado.tipo === 'ok' ? estado.prediccion.probabilidadBase : modelo.probabilidad;
 
   return (
     <div className="space-y-6">
-      {/* Migaja para volver */}
+      {/* Banda admin: sólo visible cuando hay código guardado */}
+      {codigoAdmin && (
+        <BandaAdmin onCerrarSesion={cerrarSesion} />
+      )}
+
+      {/* Migaja */}
       <Link to="/calendario" className="inline-block text-sm text-marca-primario font-medium">
         ← Calendario
       </Link>
 
-      {/* Cabecera del partido */}
+      {/* Cabecera */}
       <section className="rounded-2xl bg-white border border-marca-grisLinea p-5">
         <div className="flex items-center justify-between text-xs text-marca-grisTexto">
           <span className="uppercase tracking-wider font-semibold">
@@ -107,7 +112,7 @@ function DetallePartido() {
         </p>
       </section>
 
-      {/* Capa 1 */}
+      {/* Capa 1 — siempre visible */}
       <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
         <BarraProbabilidad
           titulo="Capa 1 · Probabilidad base (modelo estadístico)"
@@ -121,104 +126,142 @@ function DetallePartido() {
         </p>
       </section>
 
-      {/* Expandible: cómo lo calculó */}
       <DesgloseModeloBase
         desglose={modelo.desglose}
         equipoLocalId={partido.equipoLocalId}
         equipoVisitanteId={partido.equipoVisitanteId}
       />
 
-      {/* Capa 2: una de cuatro situaciones según hay mock, hay API, o no */}
-      {prediccionEfectiva ? (
-        <BloquePrediccionCompleta
-          prediccion={prediccionEfectiva}
-          esRemota={!prediccionMock && estado.tipo === 'ok'}
-          onRegenerar={reiniciar}
-        />
-      ) : estado.tipo === 'cargando' ? (
-        <BloqueCargando />
-      ) : estado.tipo === 'error' ? (
-        <BloqueError mensaje={estado.mensaje} onReintentar={generar} />
-      ) : (
-        <BloqueIdle onGenerar={generar} />
-      )}
-
-      {/* Compartir — placeholder */}
-      <section className="rounded-2xl bg-white border border-dashed border-marca-grisLinea p-4 text-center">
-        <button
-          disabled
-          className="text-sm text-marca-grisTexto cursor-not-allowed"
-        >
-          📷 Compartir esta predicción (Fase 6)
-        </button>
-      </section>
+      {/* Capa 2 — depende del estado */}
+      <BloqueCapa2
+        estado={estado}
+        codigoAdmin={codigoAdmin}
+        generando={generando}
+        onGenerar={generar}
+      />
     </div>
   );
 }
 
-// ─── Sub-bloques por estado ──────────────────────────────────────────
+// ─── Sub-componentes ─────────────────────────────────────────────────
 
-/**
- * Caso "ya hay predicción": muestra el veredicto, prob final, las 3 IAs
- * y la señal de valor. Si la prediccion vino del API (no del mock), añade
- * un pequeño botón "regenerar" por si el usuario quiere disparar de nuevo.
- */
-function BloquePrediccionCompleta({
-  prediccion,
-  esRemota,
-  onRegenerar,
-}: {
-  prediccion: import('../tipos').Prediccion;
-  esRemota: boolean;
-  onRegenerar: () => void;
-}) {
+function BandaAdmin({ onCerrarSesion }: { onCerrarSesion: () => void }) {
   return (
-    <>
-      <VeredictoSintesis
-        veredicto={prediccion.veredicto}
-        nota={prediccion.notaVeredicto}
-      />
-
-      <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
-        <BarraProbabilidad
-          titulo="Capa 2 · Probabilidad final (consenso de 3 IAs)"
-          local={prediccion.probabilidadFinal.local}
-          empate={prediccion.probabilidadFinal.empate}
-          visitante={prediccion.probabilidadFinal.visitante}
-        />
-      </section>
-
-      <section>
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-display text-lg font-semibold text-marca-tinta">
-            Lo que dijo cada IA
-          </h2>
-          {esRemota && (
-            <button
-              onClick={onRegenerar}
-              className="text-xs text-marca-primario font-medium hover:underline"
-              title="Limpia el caché de sesión y permite volver a consultar"
-            >
-              ↺ Regenerar
-            </button>
-          )}
-        </div>
-        <div className="grid gap-3 lg:grid-cols-3">
-          {prediccion.respuestasIA.map((respuesta) => (
-            <TarjetaIA key={respuesta.ia} respuesta={respuesta} />
-          ))}
-        </div>
-      </section>
-
-      <SenalValor prediccion={prediccion} />
-    </>
+    <div className="rounded-xl bg-marca-tinta text-white px-4 py-2 flex items-center justify-between text-sm">
+      <span>🔐 Modo admin · puedes generar y publicar predicciones</span>
+      <button
+        onClick={onCerrarSesion}
+        className="text-xs underline opacity-80 hover:opacity-100"
+      >
+        Cerrar sesión
+      </button>
+    </div>
   );
 }
 
-/**
- * Estado "cargando": 3 skeletons de IA + mensaje explicativo.
- */
-function BloqueCargando() {
+interface BloqueCapa2Props {
+  estado: EstadoApi;
+  codigoAdmin: string | null;
+  generando: boolean;
+  onGenerar: () => void;
+}
+
+function BloqueCapa2({ estado, codigoAdmin, generando, onGenerar }: BloqueCapa2Props) {
+  // Mientras se genera, mostramos skeletons aunque el estado anterior tuviera predicción.
+  if (generando) {
+    return <BloqueCargandoGeneracion />;
+  }
+
+  if (estado.tipo === 'cargando') {
+    return (
+      <section className="rounded-2xl border border-dashed border-marca-grisLinea p-6 bg-white text-center">
+        <p className="text-marca-grisTexto animate-pulse">
+          Cargando última predicción publicada…
+        </p>
+      </section>
+    );
+  }
+
+  if (estado.tipo === 'error') {
+    return (
+      <section className="rounded-2xl bg-red-50 border border-red-200 p-4">
+        <p className="font-display font-semibold text-red-800">
+          No se pudo cargar la predicción
+        </p>
+        <p className="mt-1 text-sm text-red-700 break-words">{estado.mensaje}</p>
+        {codigoAdmin && (
+          <button
+            onClick={onGenerar}
+            className="mt-3 inline-block px-4 py-2 rounded-full bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+          >
+            Reintentar generación
+          </button>
+        )}
+      </section>
+    );
+  }
+
+  if (estado.tipo === 'sin-prediccion') {
+    return codigoAdmin ? (
+      <BloqueAdminPuedeGenerar
+        onGenerar={onGenerar}
+        textoBoton="🧠 Generar y publicar predicción"
+        ayuda="Cualquier visitante verá lo que generes. Se guarda con timestamp en Supabase."
+      />
+    ) : (
+      <section className="rounded-2xl border border-dashed border-marca-grisLinea p-6 bg-white text-center">
+        <p className="text-marca-grisTexto">
+          Predicción pendiente de publicación.
+        </p>
+        <p className="mt-1 text-xs text-marca-grisTexto/70">
+          PronostiGol publica cada predicción manualmente antes del kickoff.
+        </p>
+      </section>
+    );
+  }
+
+  // estado.tipo === 'ok'
+  return (
+    <BloquePrediccionPublicada
+      prediccion={estado.prediccion}
+      guardadaEn={estado.guardadaEn}
+      codigoAdmin={codigoAdmin}
+      onRegenerar={onGenerar}
+    />
+  );
+}
+
+function BloqueAdminPuedeGenerar({
+  onGenerar,
+  textoBoton,
+  ayuda,
+}: {
+  onGenerar: () => void;
+  textoBoton: string;
+  ayuda: string;
+}) {
+  return (
+    <section className="rounded-2xl border-2 border-dashed border-marca-primario/40 bg-white p-5 text-center">
+      <p className="font-display font-semibold text-marca-tinta">
+        Capa 2 · Las 3 IAs no se han consultado todavía
+      </p>
+      <p className="mt-1 text-sm text-marca-grisTexto leading-relaxed">
+        Al presionar el botón se envía el contexto del partido y la Capa 1
+        a Claude, GPT y Gemini en paralelo. La predicción se guarda con
+        timestamp y queda visible para todos los visitantes.
+      </p>
+      <button
+        onClick={onGenerar}
+        className="mt-4 inline-block px-5 py-2.5 rounded-full bg-marca-primario text-white font-medium hover:bg-marca-primarioOscuro transition-colors"
+      >
+        {textoBoton}
+      </button>
+      <p className="mt-2 text-xs text-marca-grisTexto/70">{ayuda}</p>
+    </section>
+  );
+}
+
+function BloqueCargandoGeneracion() {
   return (
     <>
       <div className="rounded-2xl bg-marca-primario/5 border border-marca-primario/20 p-4 text-center">
@@ -238,58 +281,89 @@ function BloqueCargando() {
   );
 }
 
-/**
- * Estado "error": mensaje del error + botón de reintento.
- */
-function BloqueError({
-  mensaje,
-  onReintentar,
+function BloquePrediccionPublicada({
+  prediccion,
+  guardadaEn,
+  codigoAdmin,
+  onRegenerar,
 }: {
-  mensaje: string;
-  onReintentar: () => void;
+  prediccion: Prediccion;
+  guardadaEn: string | null;
+  codigoAdmin: string | null;
+  onRegenerar: () => void;
 }) {
   return (
-    <section className="rounded-2xl bg-red-50 border border-red-200 p-4">
-      <p className="font-display font-semibold text-red-800">
-        No se pudo generar la predicción
-      </p>
-      <p className="mt-1 text-sm text-red-700 break-words">{mensaje}</p>
-      <button
-        onClick={onReintentar}
-        className="mt-3 inline-block px-4 py-2 rounded-full bg-red-600 text-white text-sm font-medium hover:bg-red-700"
-      >
-        Reintentar
-      </button>
-    </section>
+    <>
+      <VeredictoSintesis
+        veredicto={prediccion.veredicto}
+        nota={prediccion.notaVeredicto}
+      />
+
+      {/* Banda de timestamp + acción admin */}
+      <div className="flex items-center justify-between text-xs text-marca-grisTexto px-1">
+        <span>
+          {guardadaEn ? (
+            <>📌 Publicada {formatearFechaPublicacion(guardadaEn)}</>
+          ) : (
+            <>📌 Predicción guardada</>
+          )}
+        </span>
+        {codigoAdmin && (
+          <button
+            onClick={onRegenerar}
+            className="text-marca-primario font-medium hover:underline"
+            title="Vuelve a consultar las 3 IAs y guarda una nueva versión"
+          >
+            ↺ Regenerar
+          </button>
+        )}
+      </div>
+
+      <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
+        <BarraProbabilidad
+          titulo="Capa 2 · Probabilidad final (consenso de 3 IAs)"
+          local={prediccion.probabilidadFinal.local}
+          empate={prediccion.probabilidadFinal.empate}
+          visitante={prediccion.probabilidadFinal.visitante}
+        />
+      </section>
+
+      <section>
+        <h2 className="font-display text-lg font-semibold text-marca-tinta mb-3">
+          Lo que dijo cada IA
+        </h2>
+        <div className="grid gap-3 lg:grid-cols-3">
+          {prediccion.respuestasIA.map((respuesta) => (
+            <TarjetaIA key={respuesta.ia} respuesta={respuesta} />
+          ))}
+        </div>
+      </section>
+
+      <SenalValor prediccion={prediccion} />
+
+      <section className="rounded-2xl bg-white border border-dashed border-marca-grisLinea p-4 text-center">
+        <button
+          disabled
+          className="text-sm text-marca-grisTexto cursor-not-allowed"
+        >
+          📷 Compartir esta predicción (Fase 6)
+        </button>
+      </section>
+    </>
   );
 }
 
 /**
- * Estado "idle": invitamos al usuario a disparar la consulta a las IAs.
- * Es manual a propósito — evita quemar tokens al explorar el calendario.
+ * Devuelve algo como "el 13 de junio a las 14:30" en zona local del usuario.
  */
-function BloqueIdle({ onGenerar }: { onGenerar: () => void }) {
-  return (
-    <section className="rounded-2xl border-2 border-dashed border-marca-primario/40 bg-white p-5 text-center">
-      <p className="font-display font-semibold text-marca-tinta">
-        Capa 2 · Las 3 IAs aún no han razonado
-      </p>
-      <p className="mt-1 text-sm text-marca-grisTexto leading-relaxed">
-        Al presionar el botón se envía el contexto del partido y la Capa 1
-        a Claude, GPT y Gemini en paralelo. Cada uno devuelve su propia
-        probabilidad, confianza y explicación.
-      </p>
-      <button
-        onClick={onGenerar}
-        className="mt-4 inline-block px-5 py-2.5 rounded-full bg-marca-primario text-white font-medium hover:bg-marca-primarioOscuro transition-colors"
-      >
-        🧠 Consultar a las 3 IAs
-      </button>
-      <p className="mt-2 text-xs text-marca-grisTexto/70">
-        El resultado se guarda en tu sesión — no se vuelve a consultar al refrescar.
-      </p>
-    </section>
-  );
+function formatearFechaPublicacion(iso: string): string {
+  const fecha = new Date(iso);
+  return new Intl.DateTimeFormat('es-EC', {
+    day: 'numeric',
+    month: 'long',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(fecha);
 }
 
 export default DetallePartido;

@@ -1,88 +1,116 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Prediccion } from '../tipos';
 
 /**
- * Hook que maneja la llamada a /api/predecir.
+ * Hook que conversa con /api/predecir en el modelo "publicación".
  *
- * Diseño deliberado:
- *   - La llamada NO se dispara automáticamente al montar. Eso quemaría
- *     tokens cada vez que el usuario abre un partido. La invoca
- *     manualmente con `generar()`, típicamente al apretar un botón.
- *   - Al montar, intenta restaurar la predicción desde sessionStorage
- *     (caché por sesión del navegador). Así, si el usuario ya generó
- *     la predicción y luego volvió, no se vuelve a llamar.
- *   - Si /api falla, se queda en estado de error con `mensaje`. El UI
- *     muestra el error y deja reintentar.
+ *   - Al montar: GET /api/predecir?partidoId=... para traer la última
+ *     predicción guardada en Supabase. Si no hay (404), estado pasa a
+ *     `sin-prediccion`.
+ *   - `generar()`: POST /api/predecir con el header X-Codigo-Admin.
+ *     Sólo funciona si `codigoAdmin` es no-null. El backend valida.
+ *
+ * El timestamp `guardadaEn` viene incluido en la respuesta — lo
+ * exponemos para que la UI muestre cuándo se publicó la predicción.
  */
 
 export type EstadoApi =
-  | { tipo: 'idle' }
   | { tipo: 'cargando' }
-  | { tipo: 'ok'; prediccion: Prediccion }
+  | { tipo: 'sin-prediccion' }
+  | { tipo: 'ok'; prediccion: Prediccion; guardadaEn: string | null }
   | { tipo: 'error'; mensaje: string };
 
 interface UsePrediccionApi {
   estado: EstadoApi;
+  /** Re-dispara la generación (sólo admin). */
   generar: () => Promise<void>;
-  /** Limpia caché y vuelve a idle. Útil para forzar regeneración. */
-  reiniciar: () => void;
+  /** True mientras se ejecuta una llamada POST. */
+  generando: boolean;
 }
 
-const claveCache = (partidoId: string) => `prediccion:${partidoId}`;
+interface RespuestaApi extends Prediccion {
+  guardadaEn?: string | null;
+  errorGuardado?: string | null;
+}
 
-export function usePrediccionApi(partidoId: string | undefined): UsePrediccionApi {
-  const [estado, setEstado] = useState<EstadoApi>({ tipo: 'idle' });
+export function usePrediccionApi(
+  partidoId: string | undefined,
+  codigoAdmin: string | null
+): UsePrediccionApi {
+  const [estado, setEstado] = useState<EstadoApi>({ tipo: 'cargando' });
+  const [generando, setGenerando] = useState(false);
 
-  // Al montar (o al cambiar partidoId), restauramos desde caché de sesión si existe.
+  // GET inicial: trae la última guardada.
   useEffect(() => {
-    if (!partidoId) {
-      setEstado({ tipo: 'idle' });
-      return;
-    }
-    const cacheado = sessionStorage.getItem(claveCache(partidoId));
-    if (cacheado) {
-      try {
-        const prediccion = JSON.parse(cacheado) as Prediccion;
-        setEstado({ tipo: 'ok', prediccion });
-        return;
-      } catch {
-        /* JSON corrupto en cache, lo ignoramos */
-      }
-    }
-    setEstado({ tipo: 'idle' });
+    if (!partidoId) return;
+    let cancelado = false;
+    setEstado({ tipo: 'cargando' });
+
+    fetch(`/api/predecir?partidoId=${encodeURIComponent(partidoId)}`)
+      .then(async (res) => {
+        if (cancelado) return;
+        if (res.status === 404) {
+          setEstado({ tipo: 'sin-prediccion' });
+          return;
+        }
+        if (!res.ok) {
+          const cuerpo = await res.json().catch(() => null);
+          throw new Error(cuerpo?.error || `HTTP ${res.status}`);
+        }
+        const data = (await res.json()) as RespuestaApi;
+        const { guardadaEn = null, errorGuardado: _e, ...prediccion } = data;
+        setEstado({
+          tipo: 'ok',
+          prediccion: prediccion as Prediccion,
+          guardadaEn,
+        });
+      })
+      .catch((err: Error) => {
+        if (cancelado) return;
+        setEstado({ tipo: 'error', mensaje: err.message });
+      });
+
+    return () => {
+      cancelado = true;
+    };
   }, [partidoId]);
 
-  const generar = async () => {
-    if (!partidoId) return;
-    setEstado({ tipo: 'cargando' });
+  // POST: generar nueva (sólo admin).
+  const generar = useCallback(async () => {
+    if (!partidoId || !codigoAdmin) return;
+    setGenerando(true);
     try {
-      const respuesta = await fetch('/api/predecir', {
+      const res = await fetch('/api/predecir', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Codigo-Admin': codigoAdmin,
+        },
         body: JSON.stringify({ partidoId }),
       });
-      if (!respuesta.ok) {
-        const cuerpo = await respuesta.json().catch(() => null);
-        throw new Error(cuerpo?.error || `HTTP ${respuesta.status}`);
+      if (!res.ok) {
+        const cuerpo = await res.json().catch(() => null);
+        throw new Error(cuerpo?.error || `HTTP ${res.status}`);
       }
-      const prediccion = (await respuesta.json()) as Prediccion;
-      try {
-        sessionStorage.setItem(claveCache(partidoId), JSON.stringify(prediccion));
-      } catch {
-        /* sessionStorage llena, no es crítico */
+      const data = (await res.json()) as RespuestaApi;
+      const { guardadaEn = null, errorGuardado, ...prediccion } = data;
+      if (errorGuardado) {
+        // Mostramos la predicción pero advertimos del error de guardado.
+        console.warn('Predicción generada pero NO guardada:', errorGuardado);
       }
-      setEstado({ tipo: 'ok', prediccion });
+      setEstado({
+        tipo: 'ok',
+        prediccion: prediccion as Prediccion,
+        guardadaEn,
+      });
     } catch (err) {
       const mensaje =
-        err instanceof Error ? err.message : 'Error desconocido al consultar las IAs';
+        err instanceof Error ? err.message : 'Error desconocido al generar';
       setEstado({ tipo: 'error', mensaje });
+    } finally {
+      setGenerando(false);
     }
-  };
+  }, [partidoId, codigoAdmin]);
 
-  const reiniciar = () => {
-    if (partidoId) sessionStorage.removeItem(claveCache(partidoId));
-    setEstado({ tipo: 'idle' });
-  };
-
-  return { estado, generar, reiniciar };
+  return { estado, generar, generando };
 }
