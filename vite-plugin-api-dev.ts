@@ -32,7 +32,30 @@ export function apiDevPlugin(): Plugin {
         if (!req.url || !req.url.startsWith('/api/')) return next();
 
         const url = new URL(req.url, 'http://localhost');
-        if (url.pathname !== '/api/predecir') return next();
+
+        // El cron en local no está soportado — Vercel lo ejecuta automático.
+        // Si alguien lo intenta, mensaje claro en JSON, no falsa OK.
+        if (url.pathname.startsWith('/api/cron/')) {
+          res.statusCode = 503;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({
+              error:
+                'El cron sólo corre en producción (Vercel). En local actívalo manualmente llamando a POST /api/predecir.',
+            })
+          );
+          return;
+        }
+
+        // Cualquier otra ruta /api/* desconocida → 404 explícito.
+        if (url.pathname !== '/api/predecir') {
+          res.statusCode = 404;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(
+            JSON.stringify({ error: `Ruta no encontrada: ${url.pathname}` })
+          );
+          return;
+        }
 
         try {
           // Construimos el objeto que espera el router.
