@@ -56,11 +56,11 @@ function Creditos() {
       <section className="mt-16 max-w-lectura border-t border-tinta-linea pt-8">
         <p className="kicker">Sobre las mascotas</p>
         <p className="mt-3 text-[15px] text-tinta-cuerpo leading-relaxed">
-          Maple, Zayu y Clutch son marcas registradas de la FIFA. PronostiGol
-          HeredIA no reproduce su diseño oficial: los emblemas que ves son
-          ilustraciones geométricas propias de un alce, un jaguar y un águila,
-          creadas para esta web. Los nombres se mencionan sólo con fines
-          informativos.
+          Maple, Zayu y Clutch son las mascotas oficiales de la Copa Mundial de
+          la FIFA 2026™ y son <strong>propiedad y marca registrada de la
+          FIFA</strong> (© FIFA). Sus imágenes se muestran aquí únicamente con
+          fines informativos y de cobertura del torneo, sin afiliación ni
+          patrocinio oficial. Todos los derechos pertenecen a la FIFA.
         </p>
       </section>
 

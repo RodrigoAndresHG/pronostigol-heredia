@@ -4,14 +4,6 @@ import { equipoPorId } from '../datos/equipos.ts';
 import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.ts';
 import TarjetaPartido from '../componentes/TarjetaPartido';
 import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
-import {
-  EmblemaAlce,
-  EmblemaJaguar,
-  EmblemaAguila,
-  PatronMexico,
-  PatronUSA,
-  PatronCanada,
-} from '../componentes/visual/Emblemas';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 
 /**
@@ -143,26 +135,29 @@ function Inicio() {
             nombre="Maple"
             descripcion="Un alce arquero, artista del estilo urbano. Representa a Canadá."
             sedes="Toronto · Vancouver"
-            emblema={<EmblemaAlce tamano={72} className="text-pais-canada" />}
-            patron={<PatronCanada className="w-32 h-24 text-pais-canada" />}
+            imagen="/mascotas/Maple.avif"
           />
           <TarjetaPais
             kicker="Mascota oficial · México"
             nombre="Zayu"
             descripcion="Un jaguar delantero, símbolo de fuerza y orgullo prehispánico."
             sedes="CDMX · Guadalajara · Monterrey"
-            emblema={<EmblemaJaguar tamano={72} className="text-pais-mexico" />}
-            patron={<PatronMexico className="w-40 h-8 text-pais-mexico" />}
+            imagen="/mascotas/Zayu.avif"
           />
           <TarjetaPais
             kicker="Mascota oficial · EE. UU."
             nombre="Clutch"
             descripcion="Un águila mediocampista. Encarna liderazgo bajo presión."
             sedes="11 sedes, de Seattle a Miami"
-            emblema={<EmblemaAguila tamano={72} className="text-pais-usa" />}
-            patron={<PatronUSA className="w-28 h-28 text-pais-usa" />}
+            imagen="/mascotas/Clutch.avif"
           />
         </div>
+        <p className="mt-4 font-mono text-[11px] text-tinta-mute">
+          Mascotas oficiales © FIFA ·{' '}
+          <Link to="/creditos" className="text-verde hover:text-verde-hover">
+            créditos →
+          </Link>
+        </p>
       </section>
 
       {/* ─── MATCHDAY ──────────────────────────────────────────────── */}
@@ -234,36 +229,45 @@ function TarjetaPais({
   nombre,
   descripcion,
   sedes,
-  emblema,
-  patron,
+  imagen,
 }: {
   kicker: string;
   nombre: string;
   descripcion: string;
   sedes: string;
-  emblema: React.ReactNode;
-  patron: React.ReactNode;
+  imagen: string;
 }) {
   return (
-    <div className="relative overflow-hidden rounded-lg border border-tinta-linea bg-tinta-tarjeta p-7 hover:border-tinta-lineaFuerte transition-colors duration-200 ease-editorial">
-      {/* Patrón cultural sutil al fondo */}
-      <div className="absolute bottom-3 right-3 opacity-[0.07] pointer-events-none">
-        {patron}
-      </div>
-      <div className="relative">
-        <p className="kicker">{kicker}</p>
-        <div className="mt-5">{emblema}</div>
-        <h3 className="mt-5 font-display text-4xl font-semibold text-tinta-titulo">
+    <article className="group relative overflow-hidden rounded-lg border border-tinta-linea aspect-[3/4]">
+      {/* Mascota oficial a sangre completa (trae su fondo de color FIFA) */}
+      <img
+        src={imagen}
+        alt={`${nombre}, mascota oficial del Mundial 2026`}
+        loading="lazy"
+        className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-[1.04] transition-transform duration-500 ease-editorial"
+      />
+      {/* Overlay degradado hacia el midnight para legibilidad del texto */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(10,22,40,0) 35%, rgba(10,22,40,0.85) 80%, rgba(10,22,40,0.97) 100%)',
+        }}
+      />
+      {/* Texto editorial overlaid abajo */}
+      <div className="absolute inset-x-0 bottom-0 p-6">
+        <p className="kicker text-tinta-titulo/80">{kicker}</p>
+        <h3 className="mt-2 font-display text-4xl font-semibold text-tinta-titulo drop-shadow">
           {nombre}
         </h3>
-        <p className="mt-2 font-display text-[17px] text-tinta-cuerpo leading-snug max-w-[34ch]">
+        <p className="mt-2 font-display text-[16px] text-tinta-cuerpo leading-snug max-w-[34ch]">
           {descripcion}
         </p>
-        <p className="mt-5 font-mono text-[11px] uppercase tracking-wide text-tinta-mute">
+        <p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-tinta-cuerpo/70">
           {sedes}
         </p>
       </div>
-    </div>
+    </article>
   );
 }
 
