@@ -1,10 +1,11 @@
 import type { Veredicto } from '../tipos';
 
 /**
- * Cintillo grande que muestra el veredicto sintetizado de las 3 IAs:
- * "consenso" (alta confianza) o "desacuerdo" (las IAs piensan distinto).
+ * Cintillo del veredicto sintetizado: "consenso" o "desacuerdo".
+ * El desacuerdo NO se esconde — es el diferencial editorial de la marca.
  *
- * El desacuerdo NO se esconde — es feature visible. Ese es el diferencial.
+ * Estilo: kicker + titular Fraunces + nota. Consenso lleva acento verde;
+ * desacuerdo lleva acento cyan (señal de "mirá esto con cuidado").
  */
 function VeredictoSintesis({
   veredicto,
@@ -14,30 +15,21 @@ function VeredictoSintesis({
   nota: string;
 }) {
   const esConsenso = veredicto === 'consenso';
-
-  const colorFondo = esConsenso
-    ? 'bg-marca-primario/10 border-marca-primario/30'
-    : 'bg-marca-acento/10 border-marca-acento/40';
-
-  const colorEtiqueta = esConsenso
-    ? 'bg-marca-primario text-white'
-    : 'bg-marca-acento text-marca-tinta';
-
-  const titulo = esConsenso
-    ? 'Consenso — las 3 IAs coinciden'
-    : 'Desacuerdo — las IAs piensan distinto';
+  const acento = esConsenso ? 'text-verde' : 'text-cyan';
+  const borde = esConsenso ? 'border-verde/30' : 'border-cyan/30';
+  const fondo = esConsenso ? 'bg-verde/[0.06]' : 'bg-cyan/[0.06]';
 
   return (
-    <div className={`rounded-2xl border p-4 ${colorFondo}`}>
-      <span
-        className={`inline-block text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${colorEtiqueta}`}
-      >
-        {esConsenso ? '✓ Consenso' : '◇ Desacuerdo'}
-      </span>
-      <h3 className="mt-2 font-display font-semibold text-marca-tinta">
-        {titulo}
+    <div className={`rounded-lg border ${borde} ${fondo} p-5 sm:p-6`}>
+      <p className={`kicker ${acento}`}>
+        {esConsenso ? 'Veredicto · Consenso' : 'Veredicto · Desacuerdo'}
+      </p>
+      <h3 className="mt-2 font-display text-2xl font-semibold text-tinta-titulo leading-snug">
+        {esConsenso
+          ? 'Las tres IAs coinciden.'
+          : 'Las IAs piensan distinto.'}
       </h3>
-      <p className="mt-1 text-sm text-marca-grisTexto leading-relaxed">
+      <p className="mt-2 max-w-lectura text-[15px] text-tinta-cuerpo leading-relaxed">
         {nota}
       </p>
     </div>

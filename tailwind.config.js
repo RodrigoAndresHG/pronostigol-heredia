@@ -1,11 +1,13 @@
 /**
- * Configuración de Tailwind para PronostiGol HeredIA.
+ * Configuración de Tailwind para PronostiGol HeredIA — v2 editorial.
  *
- * Paleta extendida para el Mundial 2026:
- *   - `marca`: el sistema de marca HeredIA (teal + ámbar).
- *   - `mundial`: rojos, azules y verdes que evocan los 3 países anfitriones
- *     (México, USA, Canadá) sin copiar sus banderas literalmente. Se usan
- *     para acentos, gradientes y identidad de las mascotas.
+ * Dirección: "broadcast deportivo nocturno con alma editorial".
+ * Dark-first, sin toggle. Tres familias tipográficas (Fraunces serif para
+ * display, Inter para UI/cuerpo, JetBrains Mono para datos). Un solo
+ * acento protagonista (verde-pasto), cyan sólo para señal.
+ *
+ * Si quieres ajustar la identidad, todo vive en `colors.tinta` y las
+ * familias de `fontFamily`. No hay gradientes multicolor a propósito.
  */
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -13,71 +15,70 @@ export default {
   theme: {
     extend: {
       colors: {
-        marca: {
-          primario: '#0D9488',
-          primarioOscuro: '#0F766E',
-          primarioClaro: '#14B8A6',
-          acento: '#F59E0B',
-          acentoClaro: '#FCD34D',
-          tinta: '#0A0A0F',
-          grisFondo: '#F8FAFC',
-          grisLinea: '#E2E8F0',
-          grisTexto: '#475569',
+        // Sistema editorial oscuro. "tinta" = la marca cromática completa.
+        tinta: {
+          fondo: '#0A1628',      // midnight pitch — fondo global
+          tarjeta: '#111E33',    // surface — cards de partido
+          elevado: '#1A2942',    // cards destacadas, modals
+          titulo: '#F8FAFC',     // H1-H3, números grandes
+          cuerpo: '#CBD5E1',     // párrafos
+          mute: '#64748B',       // metadata, captions
+          linea: '#1E2D47',      // borders default
+          lineaFuerte: '#2A3C5C',// borders hover, separadores
         },
-        mundial: {
-          // Rojo Mundial (Canadá, México)
-          rojo: '#DC2626',
-          rojoOscuro: '#991B1B',
-          // Azul Mundial (USA)
-          azul: '#2563EB',
-          azulOscuro: '#1D4ED8',
-          // Verde césped
-          cesped: '#16A34A',
-          cespedClaro: '#22C55E',
-          // Crema/papel
-          crema: '#FEF3C7',
+        // Acentos. Verde protagonista; cyan sólo señal.
+        verde: {
+          DEFAULT: '#00D27A',    // primario marca, probabilidad ganadora, CTAs
+          hover: '#00B868',
+        },
+        cyan: {
+          DEFAULT: '#38BDF8',    // señal: live, hover, segundo dato de gráficos
+        },
+        // Semánticos — exclusivamente para estado, nunca decoración.
+        alerta: '#F5B700',       // warning, deadline, upset
+        peligro: '#EF4444',      // error, predicción fallida
+        // Acentos culturales sutiles por país anfitrión (overlays 6-8%).
+        pais: {
+          mexico: '#00D27A',
+          usa: '#38BDF8',
+          canada: '#F5B700',
         },
       },
       fontFamily: {
+        // Display: serif variable de revista. TODO titular grande.
+        display: ['"Fraunces"', 'Georgia', 'serif'],
+        // UI y cuerpo: neo-grotesque.
         sans: ['"Inter"', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+        // Datos: probabilidades, fechas, códigos de país, bylines IA.
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
-      backgroundImage: {
-        // Gradiente "hero" principal — teal a tinta con un toque ámbar.
-        'gradiente-hero':
-          'linear-gradient(135deg, #0D9488 0%, #0A0A0F 60%, #422006 100%)',
-        // Gradiente "cancha" — verdes para fondos de partido.
-        'gradiente-cancha':
-          'linear-gradient(180deg, #16A34A 0%, #15803D 50%, #14532D 100%)',
-        // Gradiente "atardecer Mundial" — para CTA y banners.
-        'gradiente-atardecer':
-          'linear-gradient(135deg, #F59E0B 0%, #DC2626 50%, #7C2D12 100%)',
-        // Patrón sutil de hexágonos (pelota) — se aplica como bg.
-        'pelota-pattern':
-          "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cpolygon points='20,2 38,12 38,28 20,38 2,28 2,12' fill='none' stroke='%230D9488' stroke-width='0.5' stroke-opacity='0.15'/%3E%3C/svg%3E\")",
+      letterSpacing: {
+        kicker: '0.16em',
+      },
+      maxWidth: {
+        lectura: '65ch',
+      },
+      transitionTimingFunction: {
+        editorial: 'cubic-bezier(0.2, 0, 0, 1)',
       },
       animation: {
-        'pulse-suave': 'pulseSuave 2.5s ease-in-out infinite',
-        'aparecer': 'aparecer 0.6s ease-out',
-        'subir': 'subir 0.5s ease-out',
-        'flotar': 'flotar 3s ease-in-out infinite',
+        // Únicas animaciones permitidas: revelaciones sutiles. Sin rebotes.
+        'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0, 0, 1)',
+        'fade-in': 'fadeIn 0.6s ease-out',
+        'pulse-señal': 'pulseSenal 2s ease-in-out infinite',
       },
       keyframes: {
-        pulseSuave: {
+        fadeUp: {
+          '0%': { opacity: '0', transform: 'translateY(12px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        pulseSenal: {
           '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.65' },
-        },
-        aparecer: {
-          '0%': { opacity: '0', transform: 'translateY(8px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        subir: {
-          '0%': { opacity: '0', transform: 'translateY(20px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
-        },
-        flotar: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-6px)' },
+          '50%': { opacity: '0.4' },
         },
       },
     },

@@ -4,121 +4,91 @@ import { fechaCorta } from '../lib/zonaHoraria';
 import { porcentaje } from '../lib/formato';
 
 /**
- * Página de historial: predicciones pasadas con resultado real,
- * acierto/fallo y tasa de acierto acumulada. La transparencia es
- * el producto — los fallos se muestran exactamente igual que los aciertos.
- *
- * En la Fase 5 esto se conecta a Supabase; por ahora usamos mocks de
- * amistosos jugados durante mayo de 2026.
+ * Historial editorial: predicciones pasadas con su resultado real,
+ * acierto/fallo y tasa acumulada. La transparencia es el producto —
+ * los fallos se muestran igual que los aciertos.
  */
 function Historial() {
-  const metricas = metricasHistorial();
+  const m = metricasHistorial();
 
   return (
-    <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
-      <div>
-        <h1 className="font-display text-3xl font-bold text-marca-tinta">
-          Historial
+    <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-24 pb-12">
+      <header className="border-b border-tinta-linea pb-8">
+        <p className="kicker">Historial · Transparencia total</p>
+        <h1 className="mt-3 font-display text-4xl sm:text-6xl font-semibold text-tinta-titulo leading-[1.05]">
+          Los aciertos y los fallos.
         </h1>
-        <p className="text-sm text-marca-grisTexto mt-1">
-          Todas las predicciones, con sus aciertos y sus fallos. Sin filtros.
+        <p className="mt-3 max-w-lectura text-[15px] text-tinta-cuerpo leading-relaxed">
+          Todas las predicciones pasadas con su resultado real. Sin filtros, sin
+          esconder los errores — eso es lo que hace creíble el método.
         </p>
-      </div>
+      </header>
 
-      {/* Métricas resumen */}
-      <section className="grid grid-cols-3 gap-3">
-        <Metrica titulo="Predicciones" valor={String(metricas.total)} />
-        <Metrica
-          titulo="Aciertos"
-          valor={`${metricas.aciertos}/${metricas.total}`}
-          tono="primario"
-        />
-        <Metrica
-          titulo="Tasa acierto"
-          valor={porcentaje(metricas.tasaAcierto)}
-          tono="primario"
-        />
+      {/* Métricas grandes */}
+      <section className="mt-10 grid grid-cols-3 gap-px bg-tinta-linea border border-tinta-linea rounded-lg overflow-hidden">
+        <Metrica valor={String(m.total)} etiqueta="Predicciones" />
+        <Metrica valor={`${m.aciertos}/${m.total}`} etiqueta="Aciertos" acento />
+        <Metrica valor={porcentaje(m.tasaAcierto)} etiqueta="Tasa de acierto" acento />
       </section>
 
-      {/* Lista de registros */}
-      <div className="space-y-3">
-        {HISTORIAL.map((registro) => {
-          const local = equipoPorId(registro.partido.equipoLocalId);
-          const visitante = equipoPorId(registro.partido.equipoVisitanteId);
+      {/* Lista */}
+      <section className="mt-10 divide-y divide-tinta-linea">
+        {HISTORIAL.map((reg) => {
+          const local = equipoPorId(reg.partido.equipoLocalId);
+          const visitante = equipoPorId(reg.partido.equipoVisitanteId);
           return (
-            <article
-              key={registro.partido.id}
-              className="rounded-2xl bg-white border border-marca-grisLinea p-4"
-            >
-              <div className="flex items-center justify-between text-xs text-marca-grisTexto">
-                <span>{fechaCorta(registro.partido.fechaISO)}</span>
+            <article key={reg.partido.id} className="py-6">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[11px] text-tinta-mute uppercase tracking-wide">
+                  {fechaCorta(reg.partido.fechaISO)}
+                </span>
                 <span
-                  className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                    registro.acerto
-                      ? 'bg-marca-primario/15 text-marca-primarioOscuro'
-                      : 'bg-red-100 text-red-700'
-                  }`}
+                  className={`font-mono text-[11px] uppercase tracking-wide ${reg.acerto ? 'text-verde' : 'text-peligro'}`}
                 >
-                  {registro.acerto ? '✓ Acertó' : '✗ Falló'}
+                  {reg.acerto ? '✓ Acertó' : '✗ Falló'}
                 </span>
               </div>
 
-              <div className="mt-2 flex items-center justify-between">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-xl">{local.banderaEmoji}</span>
-                  <span className="font-display font-semibold text-marca-tinta truncate">
-                    {local.nombre}
-                  </span>
-                </div>
-                <span className="font-mono text-sm font-bold text-marca-tinta px-3">
-                  {registro.partido.golesLocal}–{registro.partido.golesVisitante}
+              <div className="mt-3 flex items-center gap-4 font-mono">
+                <span className="text-tinta-titulo font-semibold w-12">{local.id}</span>
+                <span className="text-tinta-titulo text-2xl font-display font-semibold tabular">
+                  {reg.partido.golesLocal}–{reg.partido.golesVisitante}
                 </span>
-                <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-                  <span className="font-display font-semibold text-marca-tinta truncate text-right">
-                    {visitante.nombre}
-                  </span>
-                  <span className="text-xl">{visitante.banderaEmoji}</span>
-                </div>
+                <span className="text-tinta-titulo font-semibold w-12">{visitante.id}</span>
+                <span className="text-tinta-mute text-sm hidden sm:inline">
+                  {local.nombre} vs {visitante.nombre}
+                </span>
               </div>
 
-              <p className="mt-2 text-xs text-marca-grisTexto leading-relaxed">
-                <span className="font-semibold">
-                  {registro.prediccion.veredicto === 'consenso'
-                    ? 'Consenso'
-                    : 'Desacuerdo'}
-                  :
+              <p className="mt-3 max-w-lectura text-[14px] text-tinta-cuerpo leading-relaxed">
+                <span className={`font-mono text-[11px] uppercase tracking-wide ${reg.prediccion.veredicto === 'consenso' ? 'text-verde' : 'text-cyan'}`}>
+                  {reg.prediccion.veredicto}
                 </span>{' '}
-                {registro.prediccion.notaVeredicto}
+                — {reg.prediccion.notaVeredicto}
               </p>
             </article>
           );
         })}
-      </div>
+      </section>
     </div>
   );
 }
 
 function Metrica({
-  titulo,
   valor,
-  tono = 'neutro',
+  etiqueta,
+  acento = false,
 }: {
-  titulo: string;
   valor: string;
-  tono?: 'neutro' | 'primario';
+  etiqueta: string;
+  acento?: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-white border border-marca-grisLinea p-3 text-center">
-      <p className="text-xs uppercase tracking-wider text-marca-grisTexto font-semibold">
-        {titulo}
-      </p>
-      <p
-        className={`mt-1 font-display text-2xl font-bold ${
-          tono === 'primario' ? 'text-marca-primario' : 'text-marca-tinta'
-        }`}
-      >
+    <div className="bg-tinta-tarjeta p-5 sm:p-7 text-center">
+      <p className={`font-display text-3xl sm:text-5xl font-bold tabular ${acento ? 'text-verde' : 'text-tinta-titulo'}`}>
         {valor}
       </p>
+      <p className="kicker mt-2">{etiqueta}</p>
     </div>
   );
 }

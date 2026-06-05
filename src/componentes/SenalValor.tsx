@@ -2,57 +2,50 @@ import type { Prediccion } from '../tipos';
 import { porcentaje } from '../lib/formato';
 
 /**
- * Compara la probabilidad final de la app contra la del mercado y muestra
- * si hay una "señal de valor" — un punto donde el mercado podría estar
- * subestimando un resultado.
+ * Compara la probabilidad final contra la del mercado. Si hay discrepancia
+ * significativa, marca "señal de valor". Si no, lo dice explícitamente —
+ * la transparencia sobre los "no hay" importa tanto como los "sí hay".
  *
- * Si no hay señal clara (consenso y mercado coinciden), lo decimos
- * explícitamente. La transparencia sobre los "no hay" es tan importante
- * como los "sí hay".
+ * La señal usa el acento alerta (ámbar) porque es semánticamente "atención,
+ * el mercado podría estar equivocado" — no decoración.
  */
-
 function SenalValor({ prediccion }: { prediccion: Prediccion }) {
-  if (!prediccion.cuotaMercado) {
-    return null;
-  }
+  if (!prediccion.cuotaMercado) return null;
 
-  // Hay cuota de mercado pero no señal de valor → caso "alineados".
+  // Mercado disponible pero sin señal → alineados.
   if (!prediccion.senalValor) {
     return (
-      <div className="rounded-2xl border border-marca-grisLinea bg-white p-4">
-        <span className="inline-block text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-marca-grisLinea text-marca-grisTexto">
-          Mercado vs IAs
-        </span>
-        <h3 className="mt-2 font-display font-semibold text-marca-tinta">
-          Sin señal de valor — mercado y consenso alineados
+      <div className="rounded-lg border border-tinta-linea bg-tinta-tarjeta p-5 sm:p-6">
+        <p className="kicker">Mercado vs IAs</p>
+        <h3 className="mt-2 font-display text-xl font-semibold text-tinta-titulo">
+          Sin señal de valor
         </h3>
-        <p className="mt-1 text-sm text-marca-grisTexto leading-relaxed">
-          Las probabilidades del mercado (
-          {porcentaje(prediccion.cuotaMercado.local)} /{' '}
-          {porcentaje(prediccion.cuotaMercado.empate)} /{' '}
-          {porcentaje(prediccion.cuotaMercado.visitante)}) están dentro de
-          rango respecto al consenso de las IAs. No detectamos una
-          discrepancia significativa.
+        <p className="mt-2 max-w-lectura text-[15px] text-tinta-cuerpo leading-relaxed">
+          El mercado (
+          <span className="font-mono text-tinta-titulo">
+            {porcentaje(prediccion.cuotaMercado.local)} /{' '}
+            {porcentaje(prediccion.cuotaMercado.empate)} /{' '}
+            {porcentaje(prediccion.cuotaMercado.visitante)}
+          </span>
+          ) está dentro de rango respecto al consenso de las IAs. No detectamos
+          discrepancia relevante.
         </p>
       </div>
     );
   }
 
-  // Hay señal — mostramos dirección, delta y explicación.
   const { direccion, delta, explicacion } = prediccion.senalValor;
-  const etiquetaDireccion =
+  const etiqueta =
     direccion === 'local' ? 'Local' : direccion === 'empate' ? 'Empate' : 'Visitante';
 
   return (
-    <div className="rounded-2xl border border-marca-acento/40 bg-marca-acento/10 p-4">
-      <span className="inline-block text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-marca-acento text-marca-tinta">
-        🎯 Señal de valor
-      </span>
-      <h3 className="mt-2 font-display font-semibold text-marca-tinta">
-        Posible valor en {etiquetaDireccion}{' '}
-        <span className="text-marca-acento">+{delta} pts</span>
+    <div className="rounded-lg border border-alerta/30 bg-alerta/[0.06] p-5 sm:p-6">
+      <p className="kicker text-alerta">Señal de valor</p>
+      <h3 className="mt-2 font-display text-2xl font-semibold text-tinta-titulo leading-snug">
+        Posible valor en {etiqueta}{' '}
+        <span className="font-mono text-alerta">+{delta} pts</span>
       </h3>
-      <p className="mt-1 text-sm text-marca-grisTexto leading-relaxed">
+      <p className="mt-2 max-w-lectura text-[15px] text-tinta-cuerpo leading-relaxed">
         {explicacion}
       </p>
     </div>

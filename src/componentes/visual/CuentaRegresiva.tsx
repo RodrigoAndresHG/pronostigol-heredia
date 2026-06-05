@@ -1,17 +1,13 @@
 import { useEffect, useState } from 'react';
 
 /**
- * Cuenta regresiva en vivo hasta una fecha objetivo.
- *
- * Se actualiza una vez por segundo. Cuando el objetivo ya pasó, muestra
- * un texto alternativo ("¡Ya empezó!" por defecto). Es un componente
- * puramente visual — el padre decide la fecha objetivo y los estilos.
+ * Cuenta regresiva editorial hasta una fecha objetivo. Cifras en Fraunces
+ * tabular, etiquetas en mono. Sin cajas con glow — sólo números grandes y
+ * separadores finos. Tick cada segundo.
  */
 
 interface Props {
-  /** Fecha objetivo en ISO UTC. */
   fechaObjetivoISO: string;
-  /** Texto a mostrar cuando ya pasó la fecha. */
   textoFinalizado?: string;
   className?: string;
 }
@@ -24,95 +20,72 @@ interface Tiempo {
   pasado: boolean;
 }
 
-function calcularTiempo(fechaObjetivoISO: string): Tiempo {
-  const ahora = Date.now();
-  const objetivo = new Date(fechaObjetivoISO).getTime();
-  const diff = objetivo - ahora;
-
-  if (diff <= 0) {
-    return { dias: 0, horas: 0, minutos: 0, segundos: 0, pasado: true };
-  }
-
-  const dias = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const horas = Math.floor((diff / (1000 * 60 * 60)) % 24);
-  const minutos = Math.floor((diff / (1000 * 60)) % 60);
-  const segundos = Math.floor((diff / 1000) % 60);
-  return { dias, horas, minutos, segundos, pasado: false };
+function calcular(fechaObjetivoISO: string): Tiempo {
+  const diff = new Date(fechaObjetivoISO).getTime() - Date.now();
+  if (diff <= 0) return { dias: 0, horas: 0, minutos: 0, segundos: 0, pasado: true };
+  return {
+    dias: Math.floor(diff / 86400000),
+    horas: Math.floor((diff / 3600000) % 24),
+    minutos: Math.floor((diff / 60000) % 60),
+    segundos: Math.floor((diff / 1000) % 60),
+    pasado: false,
+  };
 }
 
-function CuentaRegresiva({
-  fechaObjetivoISO,
-  textoFinalizado = '¡Ya empezó!',
-  className = '',
-}: Props) {
-  const [tiempo, setTiempo] = useState<Tiempo>(() =>
-    calcularTiempo(fechaObjetivoISO)
-  );
+function CuentaRegresiva({ fechaObjetivoISO, textoFinalizado = 'En juego', className = '' }: Props) {
+  const [t, setT] = useState<Tiempo>(() => calcular(fechaObjetivoISO));
 
   useEffect(() => {
-    const intervalo = setInterval(() => {
-      setTiempo(calcularTiempo(fechaObjetivoISO));
-    }, 1000);
-    return () => clearInterval(intervalo);
+    const i = setInterval(() => setT(calcular(fechaObjetivoISO)), 1000);
+    return () => clearInterval(i);
   }, [fechaObjetivoISO]);
 
-  if (tiempo.pasado) {
+  if (t.pasado) {
     return (
-      <div className={`text-center ${className}`}>
-        <p className="font-display text-2xl font-bold text-marca-acento animate-pulse-suave">
-          {textoFinalizado}
-        </p>
-      </div>
+      <p className={`font-mono text-verde uppercase tracking-kicker animate-pulse-señal ${className}`}>
+        {textoFinalizado}
+      </p>
     );
   }
 
   return (
-    <div className={`grid grid-cols-4 gap-2 sm:gap-4 ${className}`}>
-      <Caja valor={tiempo.dias} etiqueta={tiempo.dias === 1 ? 'día' : 'días'} />
-      <Caja
-        valor={tiempo.horas}
-        etiqueta={tiempo.horas === 1 ? 'hora' : 'horas'}
-      />
-      <Caja
-        valor={tiempo.minutos}
-        etiqueta={tiempo.minutos === 1 ? 'min' : 'mins'}
-      />
-      <Caja
-        valor={tiempo.segundos}
-        etiqueta="seg"
-        destacar
-      />
+    <div className={`flex items-end gap-4 sm:gap-6 ${className}`}>
+      <Unidad valor={t.dias} etiqueta={t.dias === 1 ? 'día' : 'días'} />
+      <Sep />
+      <Unidad valor={t.horas} etiqueta="hrs" />
+      <Sep />
+      <Unidad valor={t.minutos} etiqueta="min" />
+      <Sep />
+      <Unidad valor={t.segundos} etiqueta="seg" señal />
     </div>
   );
 }
 
-function Caja({
+function Unidad({
   valor,
   etiqueta,
-  destacar = false,
+  señal = false,
 }: {
   valor: number;
   etiqueta: string;
-  destacar?: boolean;
+  señal?: boolean;
 }) {
   return (
-    <div
-      className={`rounded-xl backdrop-blur-sm border border-white/20 px-2 py-3 sm:py-4 text-center ${
-        destacar ? 'bg-marca-acento/30' : 'bg-white/10'
-      }`}
-    >
-      <p
-        className={`font-display text-2xl sm:text-4xl font-bold text-white ${
-          destacar ? 'animate-pulse-suave' : ''
-        }`}
+    <div className="flex flex-col items-center">
+      <span
+        className={`font-display font-bold tabular leading-none text-4xl sm:text-5xl ${señal ? 'text-verde' : 'text-tinta-titulo'}`}
       >
         {String(valor).padStart(2, '0')}
-      </p>
-      <p className="text-xs uppercase tracking-wider text-white/70 mt-1">
+      </span>
+      <span className="font-mono text-[10px] uppercase tracking-kicker text-tinta-mute mt-1.5">
         {etiqueta}
-      </p>
+      </span>
     </div>
   );
+}
+
+function Sep() {
+  return <span className="font-display text-3xl sm:text-4xl text-tinta-linea leading-none mb-5">·</span>;
 }
 
 export default CuentaRegresiva;

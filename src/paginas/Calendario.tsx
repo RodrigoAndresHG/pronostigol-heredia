@@ -6,25 +6,18 @@ import { claveDiaLocal, fechaCompleta, zonaDelUsuario } from '../lib/zonaHoraria
 import TarjetaPartido from '../componentes/TarjetaPartido';
 
 /**
- * Página de calendario.
- *
- * - Filtra por equipo y por grupo.
- * - Agrupa los partidos por día local del usuario y muestra una
- *   cabecera con la fecha completa.
- * - Las horas se muestran en la zona horaria detectada del navegador
- *   (default: Ecuador / GMT-5).
+ * Calendario editorial. Filtros como chips (equipo + grupo), partidos
+ * agrupados por día local con header sticky. Horas en la zona del usuario.
  */
 function Calendario() {
   const [filtroEquipo, setFiltroEquipo] = useState<string>('');
   const [filtroGrupo, setFiltroGrupo] = useState<string>('');
 
-  // Lista de equipos ordenada alfabéticamente para el dropdown.
   const equiposOrdenados = useMemo(
     () => [...EQUIPOS].sort((a, b) => a.nombre.localeCompare(b.nombre)),
     []
   );
 
-  // Aplicamos los filtros a la lista completa.
   const partidosFiltrados = useMemo(() => {
     return PARTIDOS.filter((partido) => {
       if (
@@ -34,15 +27,11 @@ function Calendario() {
       ) {
         return false;
       }
-      if (filtroGrupo && partido.grupo !== filtroGrupo) {
-        return false;
-      }
+      if (filtroGrupo && partido.grupo !== filtroGrupo) return false;
       return true;
     });
   }, [filtroEquipo, filtroGrupo]);
 
-  // Agrupamos por día local del usuario (no por UTC) para que partidos
-  // que en UTC son al día siguiente caigan en el día correcto del usuario.
   const partidosPorDia = useMemo(() => {
     const mapa = new Map<string, typeof partidosFiltrados>();
     for (const partido of partidosFiltrados) {
@@ -53,71 +42,81 @@ function Calendario() {
     return mapa;
   }, [partidosFiltrados]);
 
-  return (
-    <div className="max-w-3xl mx-auto px-4 pt-6 space-y-6">
-      {/* Cabecera */}
-      <div>
-        <h1 className="font-display text-3xl font-bold text-marca-tinta">
-          Calendario
-        </h1>
-        <p className="text-sm text-marca-grisTexto mt-1">
-          Horas en tu zona ({zonaDelUsuario()}) · {PARTIDOS.length} partidos
-          en fase de grupos
-        </p>
-      </div>
+  const hayFiltro = filtroEquipo || filtroGrupo;
 
-      {/* Filtros */}
-      <div className="grid grid-cols-2 gap-3">
-        <label className="block">
-          <span className="text-xs uppercase tracking-wider text-marca-grisTexto font-semibold">
-            Equipo
-          </span>
+  return (
+    <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-24 pb-12">
+      {/* Cabecera editorial */}
+      <header className="border-b border-tinta-linea pb-8">
+        <p className="kicker">Calendario completo · {PARTIDOS.length} partidos</p>
+        <h1 className="mt-3 font-display text-4xl sm:text-6xl font-semibold text-tinta-titulo leading-[1.05]">
+          Todo el torneo, día por día.
+        </h1>
+        <p className="mt-3 font-mono text-[12px] text-tinta-mute uppercase tracking-wide">
+          Horas en tu zona · {zonaDelUsuario()}
+        </p>
+      </header>
+
+      {/* Filtros como chips */}
+      <div className="mt-8 space-y-4">
+        <ChipFila titulo="Grupo">
+          <Chip activo={!filtroGrupo} onClick={() => setFiltroGrupo('')}>
+            Todos
+          </Chip>
+          {LETRAS_GRUPOS.map((letra) => (
+            <Chip key={letra} activo={filtroGrupo === letra} onClick={() => setFiltroGrupo(letra)}>
+              {letra}
+            </Chip>
+          ))}
+        </ChipFila>
+
+        <div>
+          <p className="kicker mb-2">Equipo</p>
           <select
             value={filtroEquipo}
             onChange={(e) => setFiltroEquipo(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-marca-grisLinea bg-white px-3 py-2 text-sm"
+            className="w-full sm:w-auto bg-tinta-tarjeta border border-tinta-linea text-tinta-cuerpo font-mono text-sm rounded-md px-4 py-2.5 focus:border-verde focus:outline-none"
           >
-            <option value="">Todos</option>
+            <option value="">Todos los equipos</option>
             {equiposOrdenados.map((equipo) => (
               <option key={equipo.id} value={equipo.id}>
-                {equipo.banderaEmoji} {equipo.nombre}
+                {equipo.id} · {equipo.nombre}
               </option>
             ))}
           </select>
-        </label>
+        </div>
 
-        <label className="block">
-          <span className="text-xs uppercase tracking-wider text-marca-grisTexto font-semibold">
-            Grupo
-          </span>
-          <select
-            value={filtroGrupo}
-            onChange={(e) => setFiltroGrupo(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-marca-grisLinea bg-white px-3 py-2 text-sm"
+        {hayFiltro && (
+          <button
+            onClick={() => {
+              setFiltroEquipo('');
+              setFiltroGrupo('');
+            }}
+            className="font-mono text-[12px] text-tinta-mute hover:text-verde transition-colors"
           >
-            <option value="">Todos</option>
-            {LETRAS_GRUPOS.map((letra) => (
-              <option key={letra} value={letra}>
-                Grupo {letra}
-              </option>
-            ))}
-          </select>
-        </label>
+            × limpiar filtros
+          </button>
+        )}
       </div>
 
-      {/* Listado agrupado por día */}
+      {/* Listado */}
       {partidosPorDia.size === 0 ? (
-        <p className="text-center text-marca-grisTexto py-10">
-          No hay partidos que coincidan con los filtros.
+        <p className="text-center text-tinta-mute py-16 font-mono text-sm">
+          No hay partidos con esos filtros.
         </p>
       ) : (
-        <div className="space-y-6">
+        <div className="mt-12 space-y-10">
           {[...partidosPorDia.entries()].map(([clave, partidos]) => (
             <section key={clave}>
-              <h2 className="font-display text-sm font-semibold text-marca-grisTexto uppercase tracking-wider mb-3">
-                {fechaCompleta(partidos[0].fechaISO)}
-              </h2>
-              <div className="space-y-2">
+              <div className="sticky top-16 z-10 bg-tinta-fondo/90 backdrop-blur-sm py-3 -mx-1 px-1 border-b border-tinta-linea flex items-baseline justify-between">
+                <h2 className="font-display text-xl sm:text-2xl font-semibold text-tinta-titulo">
+                  {fechaCompleta(partidos[0].fechaISO)}
+                </h2>
+                <span className="font-mono text-[11px] text-tinta-mute">
+                  {partidos.length} {partidos.length === 1 ? 'partido' : 'partidos'}
+                </span>
+              </div>
+              <div className="mt-2 divide-y divide-tinta-linea">
                 {partidos.map((partido) => (
                   <TarjetaPartido key={partido.id} partido={partido} />
                 ))}
@@ -127,6 +126,39 @@ function Calendario() {
         </div>
       )}
     </div>
+  );
+}
+
+function ChipFila({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="kicker mb-2">{titulo}</p>
+      <div className="flex flex-wrap gap-2">{children}</div>
+    </div>
+  );
+}
+
+function Chip({
+  activo,
+  onClick,
+  children,
+}: {
+  activo: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'px-3.5 py-1.5 rounded-full font-mono text-[12px] border transition-colors duration-200',
+        activo
+          ? 'bg-verde text-tinta-fondo border-verde font-semibold'
+          : 'bg-transparent text-tinta-mute border-tinta-linea hover:border-tinta-mute hover:text-tinta-cuerpo',
+      ].join(' ')}
+    >
+      {children}
+    </button>
   );
 }
 

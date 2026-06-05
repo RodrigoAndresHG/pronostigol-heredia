@@ -1,42 +1,41 @@
 import type { NombreIA } from '../tipos';
 
 /**
- * Placeholder visual que se muestra mientras esperamos la respuesta
- * de una IA. Usa animación pulse de Tailwind para indicar carga
- * sin requerir un spinner.
+ * Placeholder de carga de una tarjeta IA. Estética editorial: sin spinner,
+ * sólo barras que pulsan suavemente. Mantiene el avatar de letra para que
+ * el layout no salte al llegar la respuesta.
  */
 
-const IDENTIDAD: Record<NombreIA, { color: string; emoji: string }> = {
-  Claude: { color: '#D97757', emoji: '✦' },
-  GPT: { color: '#10A37F', emoji: '◐' },
-  Gemini: { color: '#4285F4', emoji: '◆' },
+const INICIAL: Record<NombreIA, { inicial: string; anillo: string; texto: string }> = {
+  Claude: { inicial: 'C', anillo: 'border-verde/40', texto: 'text-verde/60' },
+  GPT: { inicial: 'G', anillo: 'border-cyan/40', texto: 'text-cyan/60' },
+  Gemini: { inicial: 'G', anillo: 'border-alerta/40', texto: 'text-alerta/60' },
 };
 
 function TarjetaIASkeleton({ ia }: { ia: NombreIA }) {
-  const ident = IDENTIDAD[ia];
+  const id = INICIAL[ia];
   return (
-    <div className="rounded-2xl border border-marca-grisLinea bg-white p-4 space-y-3">
-      <div className="flex items-center gap-2">
+    <div className="rounded-lg border border-tinta-linea bg-tinta-elevado p-5">
+      <div className="flex items-center gap-3">
         <span
-          className="inline-block w-7 h-7 rounded-full flex items-center justify-center text-white text-sm font-bold"
-          style={{ backgroundColor: ident.color }}
+          className={`inline-flex items-center justify-center w-9 h-9 rounded-full border ${id.anillo} bg-tinta-fondo font-mono font-semibold ${id.texto}`}
         >
-          {ident.emoji}
+          {id.inicial}
         </span>
         <div>
-          <p className="font-display font-semibold text-marca-tinta leading-tight">
+          <p className="font-sans font-semibold text-tinta-cuerpo text-[15px] leading-tight">
             {ia}
           </p>
-          <p className="text-xs text-marca-grisTexto animate-pulse">
-            Razonando…
+          <p className="font-mono text-[11px] text-tinta-mute animate-pulse-señal">
+            RAZONANDO…
           </p>
         </div>
       </div>
-      <div className="h-2 bg-marca-grisLinea rounded-full animate-pulse" />
-      <div className="space-y-2">
-        <div className="h-3 bg-marca-grisLinea rounded animate-pulse" />
-        <div className="h-3 bg-marca-grisLinea rounded animate-pulse w-5/6" />
-        <div className="h-3 bg-marca-grisLinea rounded animate-pulse w-3/4" />
+      <div className="mt-5 h-10 w-20 bg-tinta-linea rounded animate-pulse-señal" />
+      <div className="mt-5 space-y-2">
+        <div className="h-2.5 bg-tinta-linea rounded animate-pulse-señal" />
+        <div className="h-2.5 bg-tinta-linea rounded animate-pulse-señal w-5/6" />
+        <div className="h-2.5 bg-tinta-linea rounded animate-pulse-señal w-3/4" />
       </div>
     </div>
   );

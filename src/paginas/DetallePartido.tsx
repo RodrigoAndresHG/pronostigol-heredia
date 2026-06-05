@@ -12,26 +12,18 @@ import TarjetaIASkeleton from '../componentes/TarjetaIASkeleton';
 import VeredictoSintesis from '../componentes/VeredictoSintesis';
 import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
-import { EstadioPanoramico } from '../componentes/visual/Estadio';
+import FotoEstadio from '../componentes/visual/FotoEstadio';
 import type { Prediccion } from '../tipos';
 
 /**
- * Página de detalle del partido — pieza central, con diseño impactante.
+ * Detalle del partido — pieza central, editorial.
  *
- * Composición:
  *   1. Banda admin (sólo con código).
- *   2. Hero del partido: banner panorámico de estadio + banderas
- *      gigantes + nombres + hora local.
- *   3. Capa 1 (modelo base) + desglose expandible.
- *   4. Capa 2 (las 3 IAs) según estado.
+ *   2. Hero full-bleed con foto del estadio específico + códigos de equipo.
+ *   3. Ficha de equipos (rating).
+ *   4. Capa 1 (modelo) + desglose.
+ *   5. Capa 2 (las 3 IAs) según estado.
  */
-
-const BANDERAS_PAIS_ANFITRION: Record<string, string> = {
-  México: '🇲🇽',
-  'Estados Unidos': '🇺🇸',
-  Canadá: '🇨🇦',
-};
-
 function DetallePartido() {
   const { idPartido } = useParams();
   const partido = idPartido ? partidoPorId(idPartido) : undefined;
@@ -41,22 +33,19 @@ function DetallePartido() {
     () => (partido ? calcularProbabilidadBase(partido) : null),
     [partido]
   );
-
-  const { estado, generar, generando } = usePrediccionApi(
-    partido?.id,
-    codigoAdmin
-  );
+  const { estado, generar, generando } = usePrediccionApi(partido?.id, codigoAdmin);
 
   if (!partido || !modelo) {
     return (
-      <div className="space-y-3">
-        <h1 className="font-display text-2xl font-bold text-marca-tinta">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-24">
+        <p className="kicker text-alerta">Error 404</p>
+        <h1 className="mt-3 font-display text-3xl font-semibold text-tinta-titulo">
           Partido no encontrado
         </h1>
-        <p className="text-marca-grisTexto">
-          El partido <code>{idPartido}</code> no existe en el calendario.
+        <p className="mt-2 text-tinta-cuerpo">
+          El partido <span className="font-mono text-tinta-titulo">{idPartido}</span> no existe.
         </p>
-        <Link to="/calendario" className="inline-block text-marca-primario font-medium">
+        <Link to="/calendario" className="inline-block mt-5 font-mono text-[13px] text-verde">
           ← Volver al calendario
         </Link>
       </div>
@@ -65,97 +54,56 @@ function DetallePartido() {
 
   const local = equipoPorId(partido.equipoLocalId);
   const visitante = equipoPorId(partido.equipoVisitanteId);
-  const banderaAnfitrion = BANDERAS_PAIS_ANFITRION[partido.paisAnfitrion] ?? '🌎';
   const probabilidadBase =
     estado.tipo === 'ok' ? estado.prediccion.probabilidadBase : modelo.probabilidad;
 
   return (
-    <div className="space-y-6 pt-4">
-      {codigoAdmin && (
-        <div className="mx-4">
-          <BandaAdmin onCerrarSesion={cerrarSesion} />
-        </div>
-      )}
+    <div>
+      {codigoAdmin && <BandaAdmin onCerrarSesion={cerrarSesion} />}
 
-      {/* Migaja */}
-      <div className="px-4">
-        <Link to="/calendario" className="inline-block text-sm text-marca-primario font-semibold">
-          ← Calendario
-        </Link>
-      </div>
-
-      {/* HERO con estadio panorámico */}
-      <section className="relative overflow-hidden bg-marca-tinta text-white">
-        <EstadioPanoramico
-          ancho={800}
-          alto={200}
-          paisAnfitrion={partido.paisAnfitrion}
-          className="absolute inset-0 w-full h-full object-cover opacity-90"
-        />
-        <div className="relative px-4 py-6 sm:py-8 backdrop-blur-[1px] bg-marca-tinta/40">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex items-center justify-between text-xs text-white/85">
-              <span className="uppercase tracking-[0.25em] font-bold">
-                {partido.grupo ? `Grupo ${partido.grupo}` : partido.fase}
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-base">{banderaAnfitrion}</span>
-                <span className="font-mono">{horaLocal(partido.fechaISO)}</span>
-              </span>
-            </div>
-
-            <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8">
-              <div className="text-center">
-                <div className="text-6xl sm:text-7xl drop-shadow-lg animate-aparecer">
-                  {local.banderaEmoji}
-                </div>
-                <p className="mt-3 font-display font-bold text-xl sm:text-2xl">
-                  {local.nombre}
-                </p>
-                <p className="text-xs text-white/70 uppercase tracking-wider">
-                  Local · Rating {local.rating}
-                </p>
-              </div>
-
-              <div className="text-white/50 font-display text-xl sm:text-2xl tracking-widest">
-                vs
-              </div>
-
-              <div className="text-center">
-                <div
-                  className="text-6xl sm:text-7xl drop-shadow-lg animate-aparecer"
-                  style={{ animationDelay: '0.15s' }}
-                >
-                  {visitante.banderaEmoji}
-                </div>
-                <p className="mt-3 font-display font-bold text-xl sm:text-2xl">
-                  {visitante.nombre}
-                </p>
-                <p className="text-xs text-white/70 uppercase tracking-wider">
-                  Visitante · Rating {visitante.rating}
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-6 text-xs text-center text-white/80">
-              {fechaCompleta(partido.fechaISO)} · {partido.sede}
-            </p>
-          </div>
+      {/* ─── HERO ──────────────────────────────────────────────────── */}
+      <section className="relative min-h-[58vh] flex items-end overflow-hidden">
+        <FotoEstadio sede={partido.sede} overlayInferior={0.95} />
+        <div className="relative w-full max-w-6xl mx-auto px-5 sm:px-8 pb-12 pt-24">
+          <Link to="/calendario" className="font-mono text-[12px] text-tinta-mute hover:text-tinta-cuerpo transition-colors">
+            ← Calendario
+          </Link>
+          <p className="kicker mt-5">
+            {partido.grupo ? `Grupo ${partido.grupo}` : partido.fase} ·{' '}
+            {fechaCompleta(partido.fechaISO)}
+          </p>
+          <h1 className="mt-3 font-display font-bold text-tinta-titulo leading-[1.04] tracking-tight text-4xl sm:text-6xl">
+            {local.nombre}
+            <span className="text-tinta-mute"> vs </span>
+            {visitante.nombre}
+          </h1>
+          <p className="mt-4 font-mono text-[13px] text-tinta-cuerpo uppercase tracking-wide">
+            {partido.sede} · {horaLocal(partido.fechaISO)} local
+          </p>
         </div>
       </section>
 
-      <div className="px-4 space-y-6 max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12 space-y-10">
+        {/* Ficha de equipos */}
+        <section className="grid grid-cols-[1fr_auto_1fr] items-center gap-4 sm:gap-8 border-b border-tinta-linea pb-10">
+          <FichaEquipo rol="Local" codigo={local.id} nombre={local.nombre} rating={local.rating} />
+          <span className="font-display italic text-2xl text-tinta-mute">vs.</span>
+          <FichaEquipo rol="Visitante" codigo={visitante.id} nombre={visitante.nombre} rating={visitante.rating} alinearDerecha />
+        </section>
+
         {/* Capa 1 */}
-        <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
+        <section className="rounded-lg bg-tinta-tarjeta border border-tinta-linea p-6">
           <BarraProbabilidad
-            titulo="Capa 1 · Probabilidad base (modelo estadístico)"
+            kicker="Capa 1 · Probabilidad base (modelo estadístico)"
             local={probabilidadBase.local}
             empate={probabilidadBase.empate}
             visitante={probabilidadBase.visitante}
+            codigoLocal={local.id}
+            codigoVisitante={visitante.id}
           />
-          <p className="mt-3 text-xs text-marca-grisTexto leading-relaxed">
-            Calculada con rating Elo, ventaja de sede, forma y descanso —
-            sin opinión cualitativa. Las IAs (Capa 2) parten de aquí.
+          <p className="mt-4 text-sm text-tinta-mute leading-relaxed max-w-lectura">
+            Rating Elo, ventaja de sede, forma y descanso — sin opinión
+            cualitativa. Las IAs parten de aquí.
           </p>
         </section>
 
@@ -171,6 +119,8 @@ function DetallePartido() {
           codigoAdmin={codigoAdmin}
           generando={generando}
           onGenerar={generar}
+          codigoLocal={local.id}
+          codigoVisitante={visitante.id}
         />
       </div>
     </div>
@@ -181,33 +131,68 @@ function DetallePartido() {
 
 function BandaAdmin({ onCerrarSesion }: { onCerrarSesion: () => void }) {
   return (
-    <div className="rounded-xl bg-marca-tinta text-white px-4 py-2 flex items-center justify-between text-sm">
-      <span>🔐 Modo admin · puedes generar y publicar predicciones</span>
-      <button
-        onClick={onCerrarSesion}
-        className="text-xs underline opacity-80 hover:opacity-100"
-      >
-        Cerrar sesión
-      </button>
+    <div className="bg-verde/10 border-b border-verde/20">
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-2 flex items-center justify-between font-mono text-[12px]">
+        <span className="text-verde">● MODO ADMIN · puedes generar y publicar</span>
+        <button onClick={onCerrarSesion} className="text-tinta-mute hover:text-tinta-cuerpo underline">
+          cerrar sesión
+        </button>
+      </div>
     </div>
   );
 }
 
-interface BloqueCapa2Props {
+function FichaEquipo({
+  rol,
+  codigo,
+  nombre,
+  rating,
+  alinearDerecha = false,
+}: {
+  rol: string;
+  codigo: string;
+  nombre: string;
+  rating: number;
+  alinearDerecha?: boolean;
+}) {
+  return (
+    <div className={alinearDerecha ? 'text-right' : 'text-left'}>
+      <p className="kicker">{rol}</p>
+      <p className="mt-2 font-mono text-2xl sm:text-3xl text-tinta-titulo font-semibold">
+        {codigo}
+      </p>
+      <p className="mt-1 font-display text-xl sm:text-2xl text-tinta-cuerpo leading-tight">
+        {nombre}
+      </p>
+      <p className="mt-2 font-mono text-[12px] text-tinta-mute">ELO {rating}</p>
+    </div>
+  );
+}
+
+interface BloqueProps {
   estado: EstadoApi;
   codigoAdmin: string | null;
   generando: boolean;
   onGenerar: () => void;
+  codigoLocal: string;
+  codigoVisitante: string;
 }
 
-function BloqueCapa2({ estado, codigoAdmin, generando, onGenerar }: BloqueCapa2Props) {
-  if (generando) return <BloqueCargandoGeneracion />;
+function BloqueCapa2({
+  estado,
+  codigoAdmin,
+  generando,
+  onGenerar,
+  codigoLocal,
+  codigoVisitante,
+}: BloqueProps) {
+  if (generando) return <BloqueCargando />;
 
   if (estado.tipo === 'cargando') {
     return (
-      <section className="rounded-2xl border border-dashed border-marca-grisLinea p-6 bg-white text-center">
-        <p className="text-marca-grisTexto animate-pulse">
-          Cargando última predicción publicada…
+      <section className="rounded-lg border border-tinta-linea bg-tinta-tarjeta p-8 text-center">
+        <p className="font-mono text-[13px] text-tinta-mute animate-pulse-señal uppercase tracking-wide">
+          Cargando predicción publicada…
         </p>
       </section>
     );
@@ -215,15 +200,16 @@ function BloqueCapa2({ estado, codigoAdmin, generando, onGenerar }: BloqueCapa2P
 
   if (estado.tipo === 'error') {
     return (
-      <section className="rounded-2xl bg-red-50 border border-red-200 p-4">
-        <p className="font-display font-semibold text-red-800">
+      <section className="rounded-lg border border-peligro/30 bg-peligro/[0.06] p-6">
+        <p className="kicker text-peligro">Error</p>
+        <h3 className="mt-2 font-display text-xl font-semibold text-tinta-titulo">
           No se pudo cargar la predicción
-        </p>
-        <p className="mt-1 text-sm text-red-700 break-words">{estado.mensaje}</p>
+        </h3>
+        <p className="mt-1 font-mono text-[12px] text-tinta-cuerpo break-words">{estado.mensaje}</p>
         {codigoAdmin && (
           <button
             onClick={onGenerar}
-            className="mt-3 inline-block px-4 py-2 rounded-full bg-red-600 text-white text-sm font-medium hover:bg-red-700"
+            className="mt-4 px-5 py-2.5 rounded-md bg-peligro text-white font-semibold text-sm"
           >
             Reintentar generación
           </button>
@@ -234,15 +220,15 @@ function BloqueCapa2({ estado, codigoAdmin, generando, onGenerar }: BloqueCapa2P
 
   if (estado.tipo === 'sin-prediccion') {
     return codigoAdmin ? (
-      <BloqueAdminPuedeGenerar onGenerar={onGenerar} />
+      <BloqueAdminGenerar onGenerar={onGenerar} />
     ) : (
-      <section className="rounded-2xl bg-gradient-to-br from-marca-primario/5 to-marca-acento/5 border border-marca-grisLinea p-6 text-center">
-        <p className="text-3xl mb-2">⏳</p>
-        <p className="font-display font-bold text-marca-tinta text-lg">
+      <section className="rounded-lg border border-tinta-linea bg-tinta-tarjeta p-8 sm:p-10 text-center">
+        <p className="kicker">Capa 2</p>
+        <h3 className="mt-3 font-display text-2xl font-semibold text-tinta-titulo">
           Predicción pendiente
-        </p>
-        <p className="mt-1 text-sm text-marca-grisTexto">
-          Las predicciones se publican automáticamente cada mañana.
+        </h3>
+        <p className="mt-2 text-[15px] text-tinta-cuerpo max-w-[42ch] mx-auto leading-relaxed">
+          Las predicciones de las 3 IAs se publican automáticamente cada mañana.
           Vuelve antes del kickoff.
         </p>
       </section>
@@ -250,124 +236,123 @@ function BloqueCapa2({ estado, codigoAdmin, generando, onGenerar }: BloqueCapa2P
   }
 
   return (
-    <BloquePrediccionPublicada
+    <PrediccionPublicada
       prediccion={estado.prediccion}
       guardadaEn={estado.guardadaEn}
       codigoAdmin={codigoAdmin}
       onRegenerar={onGenerar}
+      codigoLocal={codigoLocal}
+      codigoVisitante={codigoVisitante}
     />
   );
 }
 
-function BloqueAdminPuedeGenerar({ onGenerar }: { onGenerar: () => void }) {
+function BloqueAdminGenerar({ onGenerar }: { onGenerar: () => void }) {
   return (
-    <section className="rounded-2xl border-2 border-dashed border-marca-primario/40 bg-white p-5 text-center">
-      <p className="font-display font-semibold text-marca-tinta">
-        Capa 2 · Las 3 IAs no se han consultado todavía
-      </p>
-      <p className="mt-1 text-sm text-marca-grisTexto leading-relaxed">
-        Al presionar el botón se envía el contexto del partido y la Capa 1
-        a Claude, GPT y Gemini en paralelo. La predicción se guarda con
-        timestamp y queda visible para todos los visitantes.
+    <section className="rounded-lg border border-dashed border-verde/40 bg-verde/[0.04] p-8 text-center">
+      <p className="kicker text-verde">Capa 2 · Admin</p>
+      <h3 className="mt-3 font-display text-2xl font-semibold text-tinta-titulo">
+        Las 3 IAs aún no han razonado
+      </h3>
+      <p className="mt-2 text-[15px] text-tinta-cuerpo max-w-[44ch] mx-auto leading-relaxed">
+        Al generar, se envía el contexto del partido y la Capa 1 a Claude, GPT y
+        Gemini en paralelo. La predicción queda publicada con timestamp.
       </p>
       <button
         onClick={onGenerar}
-        className="mt-4 inline-block px-5 py-2.5 rounded-full bg-marca-primario text-white font-medium hover:bg-marca-primarioOscuro transition-colors"
+        className="mt-6 px-6 py-3 rounded-md bg-verde text-tinta-fondo font-semibold text-[15px] hover:bg-verde-hover transition-colors"
       >
-        🧠 Generar y publicar predicción
+        Generar y publicar
       </button>
     </section>
   );
 }
 
-function BloqueCargandoGeneracion() {
+function BloqueCargando() {
   return (
-    <>
-      <div className="rounded-2xl bg-marca-primario/5 border border-marca-primario/20 p-4 text-center">
-        <p className="font-display font-semibold text-marca-tinta">
-          Consultando a las 3 IAs en paralelo…
-        </p>
-        <p className="mt-1 text-sm text-marca-grisTexto">
-          Cada modelo razona sobre el mismo prompt. Suele tomar entre 5 y 20 segundos.
+    <div className="space-y-5">
+      <div className="rounded-lg border border-verde/20 bg-verde/[0.04] p-5 text-center">
+        <p className="kicker text-verde">Consultando en paralelo</p>
+        <p className="mt-2 text-[15px] text-tinta-cuerpo">
+          Cada modelo razona sobre el mismo prompt. 5–20 segundos.
         </p>
       </div>
-      <div className="grid gap-3 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-3">
         <TarjetaIASkeleton ia="Claude" />
         <TarjetaIASkeleton ia="GPT" />
         <TarjetaIASkeleton ia="Gemini" />
       </div>
-    </>
+    </div>
   );
 }
 
-function BloquePrediccionPublicada({
+function PrediccionPublicada({
   prediccion,
   guardadaEn,
   codigoAdmin,
   onRegenerar,
+  codigoLocal,
+  codigoVisitante,
 }: {
   prediccion: Prediccion;
   guardadaEn: string | null;
   codigoAdmin: string | null;
   onRegenerar: () => void;
+  codigoLocal: string;
+  codigoVisitante: string;
 }) {
   return (
-    <>
-      <VeredictoSintesis
-        veredicto={prediccion.veredicto}
-        nota={prediccion.notaVeredicto}
-      />
+    <div className="space-y-8">
+      <VeredictoSintesis veredicto={prediccion.veredicto} nota={prediccion.notaVeredicto} />
 
-      <div className="flex items-center justify-between text-xs text-marca-grisTexto px-1">
-        <span>
-          {guardadaEn
-            ? `📌 Publicada ${formatearFechaPublicacion(guardadaEn)}`
-            : '📌 Predicción guardada'}
+      <div className="flex items-center justify-between font-mono text-[11px] text-tinta-mute">
+        <span className="uppercase tracking-wide">
+          {guardadaEn ? `Publicada ${formatearFecha(guardadaEn)}` : 'Guardada'}
         </span>
         {codigoAdmin && (
-          <button
-            onClick={onRegenerar}
-            className="text-marca-primario font-semibold hover:underline"
-            title="Vuelve a consultar las 3 IAs y guarda una nueva versión"
-          >
-            ↺ Regenerar
+          <button onClick={onRegenerar} className="text-verde hover:text-verde-hover transition-colors">
+            ↺ regenerar
           </button>
         )}
       </div>
 
-      <section className="rounded-2xl bg-white border border-marca-grisLinea p-4">
+      <section className="rounded-lg bg-tinta-tarjeta border border-tinta-linea p-6">
         <BarraProbabilidad
-          titulo="Capa 2 · Probabilidad final (consenso de 3 IAs)"
+          kicker="Capa 2 · Probabilidad final (consenso de 3 IAs)"
           local={prediccion.probabilidadFinal.local}
           empate={prediccion.probabilidadFinal.empate}
           visitante={prediccion.probabilidadFinal.visitante}
+          codigoLocal={codigoLocal}
+          codigoVisitante={codigoVisitante}
         />
       </section>
 
       <section>
-        <h2 className="font-display text-lg font-semibold text-marca-tinta mb-3">
-          Lo que dijo cada IA
-        </h2>
-        <div className="grid gap-3 lg:grid-cols-3">
-          {prediccion.respuestasIA.map((respuesta) => (
-            <TarjetaIA key={respuesta.ia} respuesta={respuesta} />
+        <p className="kicker">Lo que dijo cada IA</p>
+        <div className="mt-4 grid gap-5 lg:grid-cols-3">
+          {prediccion.respuestasIA.map((r) => (
+            <TarjetaIA
+              key={r.ia}
+              respuesta={r}
+              codigoLocal={codigoLocal}
+              codigoVisitante={codigoVisitante}
+            />
           ))}
         </div>
       </section>
 
       <SenalValor prediccion={prediccion} />
-    </>
+    </div>
   );
 }
 
-function formatearFechaPublicacion(iso: string): string {
-  const fecha = new Date(iso);
+function formatearFecha(iso: string): string {
   return new Intl.DateTimeFormat('es-EC', {
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(fecha);
+  }).format(new Date(iso));
 }
 
 export default DetallePartido;

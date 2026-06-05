@@ -25,8 +25,8 @@ export default defineConfig({
         short_name: 'PronostiGol',
         description:
           'Predicciones del Mundial 2026 con consenso de 3 IAs y señales de valor vs mercado. Por HeredIA.',
-        theme_color: '#0D9488',
-        background_color: '#F8FAFC',
+        theme_color: '#0A1628',
+        background_color: '#0A1628',
         display: 'standalone',
         orientation: 'portrait',
         lang: 'es-EC',

@@ -1,24 +1,71 @@
-/* Tipografías desde Google Fonts. Inter para cuerpo, Space Grotesk para titulares.
-   Los @import deben ir antes que cualquier otra regla, incluidas las @tailwind. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+/* Tipografía editorial: Fraunces (display serif), Inter (UI), JetBrains Mono (datos).
+   Los @import van antes que cualquier otra regla. */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-/* Directivas de Tailwind — generan todas las utilidades en build. */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos base mínimos. El resto vive en componentes. */
+/* Base dark-first. El fondo midnight pitch vive en :root para que no
+   haya flash blanco antes de que cargue Tailwind. */
 html,
 body,
 #root {
   height: 100%;
-  background-color: #F8FAFC; /* marca.grisFondo */
+  background-color: #0A1628; /* tinta.fondo */
 }
 
 body {
   margin: 0;
   font-family: 'Inter', system-ui, sans-serif;
-  color: #0A0A0F;
+  color: #CBD5E1; /* tinta.cuerpo */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Selección de texto con el acento de marca. */
+::selection {
+  background-color: rgba(0, 210, 122, 0.25);
+  color: #F8FAFC;
+}
+
+/* Scrollbar sutil acorde al tema oscuro (WebKit). */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: #0A1628;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E2D47;
+  border-radius: 5px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #2A3C5C;
+}
+
+/* ─── Utilidades editoriales reutilizables ─────────────────────────── */
+
+/* Kicker: la etiqueta uppercase tracked que va ENCIMA de cada titular.
+   Es el dispositivo que más sube la sensación "redacción deportiva". */
+.kicker {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #64748B; /* tinta.mute */
+}
+
+/* Tratamiento uniforme de TODAS las fotos de estadio: grayscale parcial
+   + contraste, para que ninguna foto a color saturado lea "fan app". */
+.foto-tratada {
+  filter: grayscale(0.35) contrast(1.05) brightness(0.85);
+}
+
+/* Números tabulares para que las probabilidades no "bailen" al cambiar. */
+.tabular {
+  font-variant-numeric: tabular-nums;
 }

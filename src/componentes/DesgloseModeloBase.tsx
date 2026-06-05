@@ -3,11 +3,9 @@ import { equipoPorId } from '../datos/equipos.ts';
 import { porcentaje } from '../lib/formato';
 
 /**
- * Expandible "Cómo lo calculó" que abre el detalle del modelo base.
- *
- * Lista cada factor (rating base, ventaja de sede, forma, descanso) y
- * la diferencia Elo efectiva. Sirve para que se entienda que la Capa 1
- * no es una caja negra — es una fórmula transparente.
+ * Expandible "Cómo lo calculó" — abre el detalle del modelo base.
+ * Estética editorial: tabla mono dentro de un <details>. Demuestra que
+ * la Capa 1 no es caja negra: cada factor es un número auditable.
  */
 
 interface Props {
@@ -21,102 +19,94 @@ function DesgloseModeloBase({ desglose, equipoLocalId, equipoVisitanteId }: Prop
   const visitante = equipoPorId(equipoVisitanteId);
 
   return (
-    <details className="rounded-2xl bg-white border border-marca-grisLinea overflow-hidden">
-      <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-marca-tinta hover:bg-marca-grisFondo">
-        ¿Cómo lo calculó la Capa 1?
+    <details className="group rounded-lg bg-tinta-tarjeta border border-tinta-linea overflow-hidden">
+      <summary className="cursor-pointer select-none px-5 py-4 flex items-center justify-between hover:bg-tinta-elevado/50 transition-colors">
+        <span className="font-mono text-[13px] text-tinta-cuerpo uppercase tracking-wide">
+          Cómo lo calculó la Capa 1
+        </span>
+        <span className="text-tinta-mute group-open:rotate-180 transition-transform font-mono">
+          ▾
+        </span>
       </summary>
-      <div className="px-4 pb-4 space-y-3 text-sm text-marca-grisTexto">
-        <p>
-          El modelo base parte del rating tipo Elo de cada equipo y le
-          suma ajustes objetivos. Sin opinión cualitativa — sólo números.
+      <div className="px-5 pb-5 space-y-1 font-mono text-[13px]">
+        <p className="text-tinta-mute font-sans text-sm leading-relaxed pb-3 pt-1 max-w-lectura">
+          El modelo parte del rating Elo de cada equipo y suma ajustes
+          objetivos. Sin opinión cualitativa — sólo números.
         </p>
 
+        <Linea etiqueta={`Rating · ${local.id}`} valor={`${desglose.ratingLocal}`} />
         <Linea
-          etiqueta={`Rating base de ${local.banderaEmoji} ${local.nombre}`}
-          valor={`${desglose.ratingLocal}`}
-        />
-        <Linea
-          etiqueta="Ventaja de sede para el local"
+          etiqueta="Ventaja de sede"
           valor={`${desglose.bonusSedeLocal >= 0 ? '+' : ''}${desglose.bonusSedeLocal}`}
           ayuda={
             desglose.bonusSedeLocal === 120
-              ? 'Anfitrión jugando en su propio país'
-              : 'Bonus nominal (vestidor, coin-toss)'
+              ? 'Anfitrión en su país'
+              : desglose.bonusSedeLocal === 0
+                ? 'Sede neutral'
+                : 'Bonus nominal'
           }
         />
         {desglose.ajusteFormaLocal !== 0 && (
           <Linea
-            etiqueta="Forma reciente del local"
+            etiqueta="Forma del local"
             valor={`${desglose.ajusteFormaLocal >= 0 ? '+' : ''}${desglose.ajusteFormaLocal}`}
           />
         )}
         {desglose.ajusteDescansoLocal !== 0 && (
-          <Linea
-            etiqueta="Descanso del local"
-            valor={`${desglose.ajusteDescansoLocal}`}
-            ayuda="Penalización por descanso corto"
-          />
+          <Linea etiqueta="Descanso del local" valor={`${desglose.ajusteDescansoLocal}`} />
         )}
         <Linea
-          etiqueta={`Rating efectivo del local`}
+          etiqueta={`Efectivo · ${local.id}`}
           valor={`${Math.round(desglose.ratingLocalEfectivo)}`}
           destacado
         />
 
-        <div className="border-t border-marca-grisLinea my-2" />
+        <div className="h-px bg-tinta-linea my-2" />
 
-        <Linea
-          etiqueta={`Rating base de ${visitante.banderaEmoji} ${visitante.nombre}`}
-          valor={`${desglose.ratingVisitante}`}
-        />
+        <Linea etiqueta={`Rating · ${visitante.id}`} valor={`${desglose.ratingVisitante}`} />
         {desglose.ajusteFormaVisitante !== 0 && (
           <Linea
-            etiqueta="Forma reciente del visitante"
+            etiqueta="Forma del visitante"
             valor={`${desglose.ajusteFormaVisitante >= 0 ? '+' : ''}${desglose.ajusteFormaVisitante}`}
           />
         )}
         {desglose.ajusteDescansoVisitante !== 0 && (
-          <Linea
-            etiqueta="Descanso del visitante"
-            valor={`${desglose.ajusteDescansoVisitante}`}
-          />
+          <Linea etiqueta="Descanso del visitante" valor={`${desglose.ajusteDescansoVisitante}`} />
         )}
         <Linea
-          etiqueta="Rating efectivo del visitante"
+          etiqueta={`Efectivo · ${visitante.id}`}
           valor={`${Math.round(desglose.ratingVisitanteEfectivo)}`}
           destacado
         />
 
-        <div className="border-t border-marca-grisLinea my-2" />
+        <div className="h-px bg-tinta-linea my-2" />
 
         <Linea
-          etiqueta="Diferencia efectiva (Elo)"
+          etiqueta="Diferencia Elo"
           valor={`${desglose.diferenciaElo > 0 ? '+' : ''}${Math.round(desglose.diferenciaElo)}`}
           ayuda={
             desglose.diferenciaElo > 0
-              ? 'Favorece al local'
+              ? 'Favor local'
               : desglose.diferenciaElo < 0
-                ? 'Favorece al visitante'
-                : 'Equilibrio total'
+                ? 'Favor visitante'
+                : 'Equilibrio'
           }
         />
         <Linea
-          etiqueta="Probabilidad de empate estimada"
+          etiqueta="Prob. empate"
           valor={porcentaje(desglose.probEmpate)}
-          ayuda="Decrece al aumentar la diferencia de rating"
+          ayuda="Decrece con la diferencia"
         />
 
-        <p className="pt-2 text-xs text-marca-grisTexto/80 italic">
-          Forma y descanso están en cero por ahora; entran con datos reales en
-          Fase 4 (football-data.org). Las IAs (Capa 2) toman esta base como
-          punto de partida y la ajustan con contexto cualitativo.
+        <p className="text-tinta-mute/70 font-sans text-xs italic pt-3 leading-relaxed max-w-lectura">
+          Forma y descanso entran con datos reales en una fase posterior. Las
+          IAs (Capa 2) toman esta base y la ajustan con contexto.
         </p>
       </div>
     </details>
   );
 }
 
-/** Una línea etiqueta / valor con tooltip opcional. */
 function Linea({
   etiqueta,
   valor,
@@ -129,19 +119,13 @@ function Linea({
   destacado?: boolean;
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3">
-      <span className="text-marca-grisTexto">
+    <div className="flex items-baseline justify-between gap-3 py-0.5">
+      <span className="text-tinta-mute">
         {etiqueta}
-        {ayuda && (
-          <span className="block text-xs text-marca-grisTexto/70 italic">
-            {ayuda}
-          </span>
-        )}
+        {ayuda && <span className="text-tinta-mute/60 ml-2 text-[11px]">{ayuda}</span>}
       </span>
       <span
-        className={`font-mono whitespace-nowrap ${
-          destacado ? 'font-bold text-marca-tinta' : 'text-marca-tinta'
-        }`}
+        className={`tabular whitespace-nowrap ${destacado ? 'text-verde font-semibold' : 'text-tinta-cuerpo'}`}
       >
         {valor}
       </span>
