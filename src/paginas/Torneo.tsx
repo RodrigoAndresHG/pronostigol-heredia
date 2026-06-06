@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { LISTA_ESTADIOS, rutaImagenEstadio } from '../datos/estadios.js';
 import { estadioPorSede } from '../datos/estadios.js';
 import { PARTIDOS } from '../datos/partidos.js';
+import { CanalWhatsApp } from '../componentes/Llamados';
 
 /**
  * Explicador del Mundial 2026, editorial.
@@ -149,6 +150,9 @@ function Torneo() {
             </Link>
           </p>
         </section>
+
+        {/* Captación: fan que llegó por el torneo → al canal */}
+        <CanalWhatsApp variante="linea" contexto="predicción del Mundial" />
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import TarjetaIASkeleton from '../componentes/TarjetaIASkeleton';
 import VeredictoSintesis from '../componentes/VeredictoSintesis';
 import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
+import { CanalWhatsApp } from '../componentes/Llamados';
 import FotoEstadio from '../componentes/visual/FotoEstadio';
 import type { Prediccion } from '../tipos';
 
@@ -342,6 +343,9 @@ function PrediccionPublicada({
       </section>
 
       <SenalValor prediccion={prediccion} />
+
+      {/* Captación: acaba de consumir una predicción → máximo interés */}
+      <CanalWhatsApp variante="banda" />
     </div>
   );
 }

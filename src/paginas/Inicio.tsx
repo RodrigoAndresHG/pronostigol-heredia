@@ -4,6 +4,7 @@ import { equipoPorId } from '../datos/equipos.js';
 import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.js';
 import TarjetaPartido from '../componentes/TarjetaPartido';
 import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
+import { CanalWhatsApp, PuenteMetodo } from '../componentes/Llamados';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 
 /**
@@ -178,26 +179,17 @@ function Inicio() {
             <TarjetaPartido key={partido.id} partido={partido} mostrarFecha />
           ))}
         </div>
+
+        {/* Captación: el fan que mira los próximos partidos → al canal */}
+        <div className="mt-8">
+          <CanalWhatsApp variante="banda" />
+        </div>
       </section>
 
-      {/* ─── CTA FINAL ─────────────────────────────────────────────── */}
+      {/* ─── CIERRE: puente al método (LMS) ────────────────────────── */}
       <section className="border-t border-tinta-linea bg-tinta-tarjeta">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-20 sm:py-28">
-          <p className="kicker">La promesa</p>
-          <h2 className="mt-3 font-display text-3xl sm:text-5xl font-semibold text-tinta-titulo leading-[1.08] max-w-[18ch]">
-            Tres IAs. Un consenso. Cero adivinanzas.
-          </h2>
-          <p className="mt-4 max-w-lectura text-[17px] text-tinta-cuerpo leading-relaxed">
-            No publicamos un generador automático que cualquiera dispara.
-            Publicamos predicciones razonadas, con timestamp, antes del partido —
-            y después mostramos los aciertos y los fallos sin maquillaje.
-          </p>
-          <Link
-            to="/historial"
-            className="inline-flex items-center gap-2 mt-7 px-6 py-3 rounded-md bg-verde text-tinta-fondo font-semibold text-[15px] hover:bg-verde-hover transition-colors"
-          >
-            Ver el historial <span aria-hidden>→</span>
-          </Link>
+          <PuenteMetodo variante="banda" contenido="inicio-final" gancho="metodo" />
         </div>
       </section>
     </div>

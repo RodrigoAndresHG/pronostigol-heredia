@@ -1,14 +1,21 @@
 import { Link } from 'react-router-dom';
+import { CanalWhatsApp, PuenteMetodo } from './Llamados';
 
 /**
- * Pie de página editorial. Aviso legal permanente (las predicciones no son
- * consejo de apuestas) + enlaces a créditos y secciones. Vive siempre visible
- * para que cualquier captura incluya el aviso.
+ * Pie de página editorial. Captación global (WhatsApp + workshop) +
+ * aviso legal permanente + enlaces. Vive siempre visible para que
+ * cualquier captura incluya el aviso.
  */
 function AvisoLegal() {
   return (
     <footer className="mt-20 border-t border-tinta-linea bg-tinta-tarjeta">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-12">
+        {/* Captación global — ambos destinos, compactos */}
+        <div className="grid gap-3 sm:grid-cols-2 pb-10 mb-10 border-b border-tinta-linea">
+          <CanalWhatsApp variante="linea" contexto="predicción" />
+          <PuenteMetodo variante="linea" contenido="footer" />
+        </div>
+
         <div className="grid gap-8 sm:grid-cols-[2fr_1fr]">
           {/* Aviso */}
           <div className="max-w-lectura">

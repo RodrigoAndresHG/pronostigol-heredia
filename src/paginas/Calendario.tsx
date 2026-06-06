@@ -4,6 +4,7 @@ import { EQUIPOS } from '../datos/equipos';
 import { LETRAS_GRUPOS } from '../datos/grupos';
 import { claveDiaLocal, fechaCompleta, zonaDelUsuario } from '../lib/zonaHoraria';
 import TarjetaPartido from '../componentes/TarjetaPartido';
+import { CanalWhatsApp } from '../componentes/Llamados';
 
 /**
  * Calendario editorial. Filtros como chips (equipo + grupo), partidos
@@ -125,6 +126,11 @@ function Calendario() {
           ))}
         </div>
       )}
+
+      {/* Captación: fan navegando el fixture → al canal */}
+      <div className="mt-12">
+        <CanalWhatsApp variante="linea" contexto="predicción del día" />
+      </div>
     </div>
   );
 }

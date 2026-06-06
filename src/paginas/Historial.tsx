@@ -2,6 +2,7 @@ import { HISTORIAL, metricasHistorial } from '../datos/predicciones';
 import { equipoPorId } from '../datos/equipos';
 import { fechaCorta } from '../lib/zonaHoraria';
 import { porcentaje } from '../lib/formato';
+import { PuenteMetodo } from '../componentes/Llamados';
 
 /**
  * Historial editorial: predicciones pasadas con su resultado real,
@@ -70,6 +71,11 @@ function Historial() {
           );
         })}
       </section>
+
+      {/* Captación: quien evalúa la credibilidad → al método (LMS) */}
+      <div className="mt-12">
+        <PuenteMetodo variante="banda" contenido="historial" gancho="credibilidad" />
+      </div>
     </div>
   );
 }
