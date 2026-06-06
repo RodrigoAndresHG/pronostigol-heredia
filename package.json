@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "validar-datos": "tsx scripts/validar-datos.ts",
+    "generar-lote": "tsx scripts/generar-lote.ts",
     "test": "tsx --test tests/**/*.test.ts"
   },
   "dependencies": {
