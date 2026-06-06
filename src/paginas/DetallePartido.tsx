@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { partidoPorId } from '../datos/partidos.ts';
-import { equipoPorId } from '../datos/equipos.ts';
-import { calcularProbabilidadBase } from '../lib/modeloBase.ts';
-import { useAdmin } from '../lib/useAdmin.ts';
-import { usePrediccionApi, type EstadoApi } from '../lib/usePrediccionApi.ts';
+import { partidoPorId } from '../datos/partidos.js';
+import { equipoPorId } from '../datos/equipos.js';
+import { calcularProbabilidadBase } from '../lib/modeloBase.js';
+import { useAdmin } from '../lib/useAdmin.js';
+import { usePrediccionApi, type EstadoApi } from '../lib/usePrediccionApi.js';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 import BarraProbabilidad from '../componentes/BarraProbabilidad';
 import TarjetaIA from '../componentes/TarjetaIA';

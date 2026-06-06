@@ -1,11 +1,11 @@
-import type { Prediccion } from '../../src/tipos/index.ts';
-import { partidoPorId } from '../../src/datos/partidos.ts';
-import { calcularProbabilidadBase } from '../../src/lib/modeloBase.ts';
-import { construirPrompt } from './prompt.ts';
-import { consultarClaude } from './iaClaude.ts';
-import { consultarGPT } from './iaGPT.ts';
-import { consultarGemini } from './iaGemini.ts';
-import { sintetizar } from './sintesis.ts';
+import type { Prediccion } from '../../src/tipos/index.js';
+import { partidoPorId } from '../../src/datos/partidos.js';
+import { calcularProbabilidadBase } from '../../src/lib/modeloBase.js';
+import { construirPrompt } from './prompt.js';
+import { consultarClaude } from './iaClaude.js';
+import { consultarGPT } from './iaGPT.js';
+import { consultarGemini } from './iaGemini.js';
+import { sintetizar } from './sintesis.js';
 
 /**
  * Función núcleo de predicción.

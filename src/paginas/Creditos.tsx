@@ -1,4 +1,4 @@
-import { LISTA_ESTADIOS } from '../datos/estadios.ts';
+import { LISTA_ESTADIOS } from '../datos/estadios.js';
 
 /**
  * Página de créditos. Indexa todas las fotos de estadios con su autor,

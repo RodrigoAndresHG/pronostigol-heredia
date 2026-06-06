@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { estadioPorSede, rutaImagenEstadio } from '../../datos/estadios.ts';
+import { estadioPorSede, rutaImagenEstadio } from '../../datos/estadios.js';
 
 /**
  * Renderiza la foto real de un estadio como fondo tratado (grayscale +

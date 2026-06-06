@@ -11,8 +11,8 @@
 
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { calcularProbabilidadBase } from '../src/lib/modeloBase.ts';
-import { PARTIDOS, partidoPorId } from '../src/datos/partidos.ts';
+import { calcularProbabilidadBase } from '../src/lib/modeloBase.js';
+import { PARTIDOS, partidoPorId } from '../src/datos/partidos.js';
 
 const dentro = (valor: number, minimo: number, maximo: number) =>
   valor >= minimo && valor <= maximo;

@@ -2,7 +2,7 @@ import type {
   DistribucionResultado,
   RespuestaIA,
   Veredicto,
-} from '../../src/tipos/index.ts';
+} from '../../src/tipos/index.js';
 
 /**
  * Sintetiza las respuestas de las 3 IAs en un veredicto único.

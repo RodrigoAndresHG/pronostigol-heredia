@@ -1,4 +1,4 @@
-import type { Equipo } from '../tipos';
+import type { Equipo } from '../tipos/index.js';
 
 /**
  * Los 48 equipos del Mundial 2026 y su distribución oficial en grupos.

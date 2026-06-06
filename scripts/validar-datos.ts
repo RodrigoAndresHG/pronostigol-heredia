@@ -16,9 +16,9 @@
  *   - 12 grupos × 3 matchdays × 2 partidos = 72, correctamente repartidos.
  */
 
-import { EQUIPOS, EQUIPOS_POR_ID } from '../src/datos/equipos.ts';
-import { PARTIDOS } from '../src/datos/partidos.ts';
-import { LETRAS_GRUPOS } from '../src/datos/grupos.ts';
+import { EQUIPOS, EQUIPOS_POR_ID } from '../src/datos/equipos.js';
+import { PARTIDOS } from '../src/datos/partidos.js';
+import { LETRAS_GRUPOS } from '../src/datos/grupos.js';
 
 let errores = 0;
 const fallar = (msg: string) => {

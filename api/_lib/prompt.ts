@@ -1,6 +1,6 @@
-import type { DistribucionResultado, Partido } from '../../src/tipos/index.ts';
-import type { DesgloseModelo } from '../../src/lib/modeloBase.ts';
-import { equipoPorId } from '../../src/datos/equipos.ts';
+import type { DistribucionResultado, Partido } from '../../src/tipos/index.js';
+import type { DesgloseModelo } from '../../src/lib/modeloBase.js';
+import { equipoPorId } from '../../src/datos/equipos.js';
 
 /**
  * Construye el prompt que reciben las 3 IAs.

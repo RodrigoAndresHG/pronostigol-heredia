@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { LISTA_ESTADIOS, rutaImagenEstadio } from '../datos/estadios.ts';
-import { estadioPorSede } from '../datos/estadios.ts';
-import { PARTIDOS } from '../datos/partidos.ts';
+import { LISTA_ESTADIOS, rutaImagenEstadio } from '../datos/estadios.js';
+import { estadioPorSede } from '../datos/estadios.js';
+import { PARTIDOS } from '../datos/partidos.js';
 
 /**
  * Explicador del Mundial 2026, editorial.

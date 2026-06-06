@@ -86,7 +86,7 @@ export function apiDevPlugin(): Plugin {
           }
 
           // Llamamos al router compartido (el mismo que usa Vercel).
-          const mod = await server.ssrLoadModule('/api/_lib/router.ts');
+          const mod = await server.ssrLoadModule('/api/_lib/router.js');
           const manejar = mod.manejarPrediccion as (entrada: {
             method: string;
             query: Record<string, string | undefined>;

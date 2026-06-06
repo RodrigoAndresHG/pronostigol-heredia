@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { manejarPrediccion } from './_lib/router.ts';
+import { manejarPrediccion } from './_lib/router.js';
 
 /**
  * Endpoint /api/predecir.

@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Prediccion } from '../../src/tipos/index.ts';
+import type { Prediccion } from '../../src/tipos/index.js';
 
 /**
  * Adaptador de Supabase para la tabla `predicciones`.

@@ -1,4 +1,4 @@
-import type { NombreIA, RespuestaIA } from '../../src/tipos/index.ts';
+import type { NombreIA, RespuestaIA } from '../../src/tipos/index.js';
 
 /**
  * Helpers compartidos por las 3 integraciones de IA.

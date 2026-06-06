@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import type { RespuestaIA } from '../../src/tipos/index.ts';
-import { parsearRespuestaIA, respuestaErronea } from './parser.ts';
+import type { RespuestaIA } from '../../src/tipos/index.js';
+import { parsearRespuestaIA, respuestaErronea } from './parser.js';
 
 /**
  * Consulta a Claude (Anthropic) y devuelve la respuesta parseada.

@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
-import type { RespuestaIA } from '../../src/tipos/index.ts';
-import { parsearRespuestaIA, respuestaErronea } from './parser.ts';
+import type { RespuestaIA } from '../../src/tipos/index.js';
+import { parsearRespuestaIA, respuestaErronea } from './parser.js';
 
 /**
  * Consulta a Gemini (Google) y devuelve la respuesta parseada.

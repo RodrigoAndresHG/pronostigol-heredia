@@ -1,4 +1,4 @@
-import type { Partido, LetraGrupo, FasePartido } from '../tipos';
+import type { Partido, LetraGrupo, FasePartido } from '../tipos/index.js';
 
 /**
  * Calendario oficial de la fase de grupos del Mundial 2026.

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { PARTIDOS } from '../datos/partidos.ts';
-import { equipoPorId } from '../datos/equipos.ts';
-import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.ts';
+import { PARTIDOS } from '../datos/partidos.js';
+import { equipoPorId } from '../datos/equipos.js';
+import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.js';
 import TarjetaPartido from '../componentes/TarjetaPartido';
 import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';

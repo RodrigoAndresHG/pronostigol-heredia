@@ -1,11 +1,11 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { PARTIDOS } from '../../src/datos/partidos.ts';
-import { predecir } from '../_lib/core.ts';
+import { PARTIDOS } from '../../src/datos/partidos.js';
+import { predecir } from '../_lib/core.js';
 import {
   leerUltimaPrediccion,
   guardarPrediccion,
   supabaseConfigurado,
-} from '../_lib/almacen.ts';
+} from '../_lib/almacen.js';
 
 /**
  * Cron diario: genera predicciones para los partidos próximos.

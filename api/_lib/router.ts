@@ -1,6 +1,6 @@
-import { predecir } from './core.ts';
-import { leerUltimaPrediccion, guardarPrediccion } from './almacen.ts';
-import { esAdmin } from './admin.ts';
+import { predecir } from './core.js';
+import { leerUltimaPrediccion, guardarPrediccion } from './almacen.js';
+import { esAdmin } from './admin.js';
 
 /**
  * Router puro de /api/predecir, sin conocimiento de HTTP framework.

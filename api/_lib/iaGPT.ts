@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
-import type { RespuestaIA } from '../../src/tipos/index.ts';
-import { parsearRespuestaIA, respuestaErronea } from './parser.ts';
+import type { RespuestaIA } from '../../src/tipos/index.js';
+import { parsearRespuestaIA, respuestaErronea } from './parser.js';
 
 /**
  * Consulta a GPT (OpenAI) y devuelve la respuesta parseada.

@@ -1,5 +1,5 @@
-import type { DistribucionResultado, Equipo, Partido } from '../tipos';
-import { equipoPorId } from '../datos/equipos.ts';
+import type { DistribucionResultado, Equipo, Partido } from '../tipos/index.js';
+import { equipoPorId } from '../datos/equipos.js';
 
 /**
  * Modelo base de probabilidad (Capa 1).

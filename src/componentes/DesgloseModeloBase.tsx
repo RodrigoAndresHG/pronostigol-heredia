@@ -1,5 +1,5 @@
 import type { DesgloseModelo } from '../lib/modeloBase';
-import { equipoPorId } from '../datos/equipos.ts';
+import { equipoPorId } from '../datos/equipos.js';
 import { porcentaje } from '../lib/formato';
 
 /**

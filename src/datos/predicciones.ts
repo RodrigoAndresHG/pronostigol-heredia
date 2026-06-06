@@ -1,6 +1,6 @@
 import type { Prediccion, RegistroHistorial, Partido } from '../tipos';
-import { calcularProbabilidadBase } from '../lib/modeloBase.ts';
-import { partidoPorId } from './partidos.ts';
+import { calcularProbabilidadBase } from '../lib/modeloBase.js';
+import { partidoPorId } from './partidos.js';
 
 /**
  * Predicciones mock para los partidos destacados del Mundial 2026.
