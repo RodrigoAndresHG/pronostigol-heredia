@@ -35,3 +35,6 @@ dev-dist
 *.sln
 *.sw?
 .env*.local
+
+# Generado en build (embebe dist/index.html para api/meta.ts)
+api/_htmlBase.ts

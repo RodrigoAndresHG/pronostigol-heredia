@@ -13,6 +13,7 @@ import VeredictoSintesis from '../componentes/VeredictoSintesis';
 import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
 import { CanalWhatsApp } from '../componentes/Llamados';
+import BotonCompartir from '../componentes/BotonCompartir';
 import FotoEstadio from '../componentes/visual/FotoEstadio';
 import type { Prediccion } from '../tipos';
 
@@ -122,6 +123,8 @@ function DetallePartido() {
           onGenerar={generar}
           codigoLocal={local.id}
           codigoVisitante={visitante.id}
+          idPartido={partido.id}
+          tituloCompartir={`${local.nombre} vs ${visitante.nombre}`}
         />
       </div>
     </div>
@@ -177,6 +180,8 @@ interface BloqueProps {
   onGenerar: () => void;
   codigoLocal: string;
   codigoVisitante: string;
+  idPartido: string;
+  tituloCompartir: string;
 }
 
 function BloqueCapa2({
@@ -186,6 +191,8 @@ function BloqueCapa2({
   onGenerar,
   codigoLocal,
   codigoVisitante,
+  idPartido,
+  tituloCompartir,
 }: BloqueProps) {
   if (generando) return <BloqueCargando />;
 
@@ -244,6 +251,8 @@ function BloqueCapa2({
       onRegenerar={onGenerar}
       codigoLocal={codigoLocal}
       codigoVisitante={codigoVisitante}
+      idPartido={idPartido}
+      tituloCompartir={tituloCompartir}
     />
   );
 }
@@ -294,6 +303,8 @@ function PrediccionPublicada({
   onRegenerar,
   codigoLocal,
   codigoVisitante,
+  idPartido,
+  tituloCompartir,
 }: {
   prediccion: Prediccion;
   guardadaEn: string | null;
@@ -301,6 +312,8 @@ function PrediccionPublicada({
   onRegenerar: () => void;
   codigoLocal: string;
   codigoVisitante: string;
+  idPartido: string;
+  tituloCompartir: string;
 }) {
   return (
     <div className="space-y-8">
@@ -343,6 +356,12 @@ function PrediccionPublicada({
       </section>
 
       <SenalValor prediccion={prediccion} />
+
+      {/* Compartir como imagen — el motor de viralidad */}
+      <section className="rounded-lg border border-tinta-linea bg-tinta-tarjeta p-5">
+        <p className="kicker mb-3">Compartir</p>
+        <BotonCompartir idPartido={idPartido} titulo={tituloCompartir} />
+      </section>
 
       {/* Captación: acaba de consumir una predicción → máximo interés */}
       <CanalWhatsApp variante="banda" />

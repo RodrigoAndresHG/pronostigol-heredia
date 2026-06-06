@@ -47,6 +47,45 @@ export function apiDevPlugin(): Plugin {
           return;
         }
 
+        // /api/og-imagen → genera el PNG compartible (firma VercelRequest/Response).
+        // Adaptamos el res de Node con un shim mínimo (status/send/setHeader).
+        if (url.pathname === '/api/og-imagen') {
+          try {
+            const query: Record<string, string> = {};
+            for (const [k, v] of url.searchParams.entries()) query[k] = v;
+
+            const vreq = { query, headers: req.headers, method: req.method ?? 'GET' };
+            const vres = {
+              setHeader: (k: string, v: string) => res.setHeader(k, v),
+              status(code: number) {
+                res.statusCode = code;
+                return this;
+              },
+              send(data: unknown) {
+                res.end(data as Buffer | string);
+                return this;
+              },
+            };
+
+            const mod = await server.ssrLoadModule('/api/og-imagen.ts');
+            await mod.default(vreq, vres);
+          } catch (err) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+          }
+          return;
+        }
+
+        // /api/meta sólo corre en producción (rewrite en vercel.json). En dev,
+        // Vite sirve /partido/:id como SPA directamente.
+        if (url.pathname === '/api/meta') {
+          res.statusCode = 503;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'api/meta sólo corre en producción.' }));
+          return;
+        }
+
         // Cualquier otra ruta /api/* desconocida → 404 explícito.
         if (url.pathname !== '/api/predecir') {
           res.statusCode = 404;
