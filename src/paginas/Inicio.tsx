@@ -4,7 +4,9 @@ import { equipoPorId } from '../datos/equipos.js';
 import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.js';
 import TarjetaPartido from '../componentes/TarjetaPartido';
 import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
+import CapaParticulas from '../componentes/visual/CapaParticulas';
 import { CanalWhatsApp, PuenteMetodo } from '../componentes/Llamados';
+import Reveal from '../movimiento/Reveal';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 
 /**
@@ -26,13 +28,15 @@ function Inicio() {
   return (
     <div>
       {/* ─── HERO ──────────────────────────────────────────────────── */}
-      <section className="relative min-h-[88vh] flex items-end overflow-hidden">
-        {/* Foto de fondo */}
+      <section className="hero-grano relative min-h-[88vh] flex items-end overflow-hidden">
+        {/* Foto de fondo con Ken Burns lento */}
         {estadio && (
           <img
             src={rutaImagenEstadio(estadio.slug)}
             alt={`${estadio.nombre}, ${estadio.ciudad}`}
-            className="foto-tratada absolute inset-0 w-full h-full object-cover"
+            fetchPriority="high"
+            decoding="async"
+            className="hero-kenburns foto-tratada absolute inset-0 w-full h-full object-cover"
             style={{ filter: 'grayscale(0.4) contrast(1.05) brightness(0.5)' }}
           />
         )}
@@ -43,18 +47,23 @@ function Inicio() {
               'linear-gradient(180deg, rgba(10,22,40,0.55) 0%, rgba(10,22,40,0.75) 55%, rgba(10,22,40,0.97) 100%)',
           }}
         />
+        {/* Aliento de marca + partículas de luz */}
+        <div className="hero-respira" />
+        <CapaParticulas className="z-[1]" />
 
-        <div className="relative w-full max-w-6xl mx-auto px-5 sm:px-8 pb-16 pt-28">
-          <p className="kicker text-cyan">
-            Mundial 2026 · 11 jun — 19 jul · Consenso de 3 IAs
-          </p>
-          <h1 className="mt-4 font-display font-bold text-tinta-titulo leading-[1.02] tracking-tight text-[2.75rem] sm:text-7xl max-w-[16ch]">
-            Predicciones que tres modelos firman juntos.
-          </h1>
-          <p className="mt-6 font-display text-xl sm:text-2xl text-tinta-cuerpo leading-snug max-w-[46ch]">
-            Claude, GPT y Gemini analizan cada partido. Mostramos dónde
-            coinciden, dónde no, y cuándo el mercado podría equivocarse.
-          </p>
+        <div className="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-8 pb-16 pt-28">
+          <Reveal>
+            <p className="kicker text-cyan">
+              Mundial 2026 · 11 jun — 19 jul · Consenso de 3 IAs
+            </p>
+            <h1 className="mt-4 font-display font-bold text-tinta-titulo leading-[1.02] tracking-tight text-[2.75rem] sm:text-7xl max-w-[16ch]">
+              Predicciones que tres modelos firman juntos.
+            </h1>
+            <p className="mt-6 font-display text-xl sm:text-2xl text-tinta-cuerpo leading-snug max-w-[46ch]">
+              Claude, GPT y Gemini analizan cada partido. Mostramos dónde
+              coinciden, dónde no, y cuándo el mercado podría equivocarse.
+            </p>
+          </Reveal>
 
           {/* Cuenta regresiva al inaugural */}
           <div className="mt-10 pt-8 border-t border-tinta-lineaFuerte/40 max-w-2xl">
@@ -95,10 +104,12 @@ function Inicio() {
 
       {/* ─── METODOLOGÍA ───────────────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 py-20 sm:py-28">
-        <p className="kicker">La metodología</p>
-        <h2 className="mt-3 font-display text-3xl sm:text-5xl font-semibold text-tinta-titulo leading-[1.08] max-w-[20ch]">
-          Dos capas. Tres IAs. Cero caja negra.
-        </h2>
+        <Reveal>
+          <p className="kicker">La metodología</p>
+          <h2 className="mt-3 font-display text-3xl sm:text-5xl font-semibold text-tinta-titulo leading-[1.08] max-w-[20ch]">
+            Dos capas. Tres IAs. Cero caja negra.
+          </h2>
+        </Reveal>
 
         <div className="mt-12 grid gap-px bg-tinta-linea border border-tinta-linea rounded-lg overflow-hidden sm:grid-cols-3">
           <PasoMetodo
@@ -121,14 +132,16 @@ function Inicio() {
 
       {/* ─── TRES PAÍSES / MASCOTAS ────────────────────────────────── */}
       <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-20 sm:pb-28">
-        <p className="kicker">Tres países · Tres mascotas · Un torneo</p>
-        <h2 className="mt-3 font-display text-3xl sm:text-5xl font-semibold text-tinta-titulo leading-[1.08]">
-          Maple, Zayu y Clutch.
-        </h2>
-        <p className="mt-3 font-display text-lg text-tinta-cuerpo max-w-[52ch] leading-snug">
-          Por primera vez el Mundial se juega en tres países. Cada uno trae su
-          mascota oficial — un alce, un jaguar y un águila.
-        </p>
+        <Reveal>
+          <p className="kicker">Tres países · Tres mascotas · Un torneo</p>
+          <h2 className="mt-3 font-display text-3xl sm:text-5xl font-semibold text-tinta-titulo leading-[1.08]">
+            Maple, Zayu y Clutch.
+          </h2>
+          <p className="mt-3 font-display text-lg text-tinta-cuerpo max-w-[52ch] leading-snug">
+            Por primera vez el Mundial se juega en tres países. Cada uno trae su
+            mascota oficial — un alce, un jaguar y un águila.
+          </p>
+        </Reveal>
 
         <div className="mt-12 grid gap-5 sm:grid-cols-3">
           <TarjetaPais

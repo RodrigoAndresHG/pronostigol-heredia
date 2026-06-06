@@ -69,3 +69,60 @@ body {
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* ─── Capas de movimiento del hero (CSS puro, GPU-friendly) ─────────── */
+
+/* Ken Burns: la foto "respira" espacialmente sin que el ojo atrape el loop. */
+.hero-kenburns {
+  animation: kenBurns 40s ease-in-out infinite alternate;
+  transform-origin: 60% 40%;
+  will-change: transform;
+}
+
+/* Aliento de marca: un radial verde tenue que pulsa en la zona baja. */
+.hero-respira {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 50% at 30% 78%,
+    rgba(0, 210, 122, 0.07) 0%,
+    rgba(0, 210, 122, 0) 70%
+  );
+  mix-blend-mode: screen;
+  animation: respira 9s ease-in-out infinite;
+  will-change: opacity, transform;
+}
+
+/* Grano + scanline sutil: textura "broadcast nocturno", mata el banding. */
+.hero-grano::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.015) 0px,
+    rgba(255, 255, 255, 0.015) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: scanline 8s linear infinite;
+  opacity: 0.5;
+}
+
+/* ─── Accesibilidad: congelar animaciones CSS puras si el usuario lo pide ── */
+@media (prefers-reduced-motion: reduce) {
+  .hero-kenburns,
+  .hero-respira,
+  .hero-grano::after {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

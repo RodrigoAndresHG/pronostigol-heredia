@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import ToggleSonido from './ToggleSonido';
 
 /**
  * Barra de navegación editorial. Sticky, fondo midnight con blur.
@@ -27,28 +28,31 @@ function BarraNavegacion() {
         </NavLink>
 
         {/* Enlaces */}
-        <nav className="overflow-x-auto">
-          <ul className="flex gap-1 font-mono text-[13px]">
-            {enlaces.map((enlace) => (
-              <li key={enlace.ruta}>
-                <NavLink
-                  to={enlace.ruta}
-                  end={enlace.ruta === '/'}
-                  className={({ isActive }) =>
-                    [
-                      'inline-block px-3 py-1.5 rounded-md whitespace-nowrap transition-colors duration-200 ease-editorial',
-                      isActive
-                        ? 'text-verde'
-                        : 'text-tinta-mute hover:text-tinta-cuerpo',
-                    ].join(' ')
-                  }
-                >
-                  {enlace.etiqueta}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="flex items-center gap-2">
+          <nav className="overflow-x-auto">
+            <ul className="flex gap-1 font-mono text-[13px]">
+              {enlaces.map((enlace) => (
+                <li key={enlace.ruta}>
+                  <NavLink
+                    to={enlace.ruta}
+                    end={enlace.ruta === '/'}
+                    className={({ isActive }) =>
+                      [
+                        'inline-block px-3 py-1.5 rounded-md whitespace-nowrap transition-colors duration-200 ease-editorial',
+                        isActive
+                          ? 'text-verde'
+                          : 'text-tinta-mute hover:text-tinta-cuerpo',
+                      ].join(' ')
+                    }
+                  >
+                    {enlace.etiqueta}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <ToggleSonido />
+        </div>
       </div>
     </header>
   );

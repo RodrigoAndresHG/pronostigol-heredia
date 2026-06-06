@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'motion/react';
 import { porcentajesNormalizados } from '../lib/formato';
 
 /**
@@ -23,7 +24,11 @@ interface Props {
   kicker?: string;
   /** Versión compacta para tarjetas estrechas. */
   compacto?: boolean;
+  /** Si true, los segmentos se "llenan" con animación al entrar al viewport. */
+  animarEntrada?: boolean;
 }
+
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 function BarraProbabilidad({
   local,
@@ -33,14 +38,33 @@ function BarraProbabilidad({
   codigoVisitante = 'VISIT',
   kicker,
   compacto = false,
+  animarEntrada = false,
 }: Props) {
   const [pctLocal, pctEmpate, pctVisitante] = porcentajesNormalizados(
     local,
     empate,
     visitante
   );
+  const reduce = useReducedMotion();
+  const animar = animarEntrada && !reduce;
 
   const alto = compacto ? 'h-1.5' : 'h-2';
+
+  // Cada segmento: si anima, crece con scaleX desde la izquierda (GPU, sin reflow).
+  const segmento = (color: string, ancho: string, i: number) =>
+    animar ? (
+      <motion.div
+        key={i}
+        className={color}
+        style={{ width: ancho, transformOrigin: 'left center' }}
+        initial={{ scaleX: 0 }}
+        whileInView={{ scaleX: 1 }}
+        viewport={{ once: true, amount: 0.6 }}
+        transition={{ duration: 0.7, ease: EASE, delay: 0.05 * i }}
+      />
+    ) : (
+      <div key={i} className={`${color} transition-all duration-300 ease-editorial`} style={{ width: ancho }} />
+    );
 
   return (
     <div>
@@ -48,9 +72,9 @@ function BarraProbabilidad({
 
       {/* Franja */}
       <div className={`flex w-full ${alto} rounded-full overflow-hidden bg-tinta-linea`}>
-        <div className="bg-verde transition-all duration-300 ease-editorial" style={{ width: pctLocal }} />
-        <div className="bg-tinta-mute/50 transition-all duration-300 ease-editorial" style={{ width: pctEmpate }} />
-        <div className="bg-cyan transition-all duration-300 ease-editorial" style={{ width: pctVisitante }} />
+        {segmento('bg-verde', pctLocal, 0)}
+        {segmento('bg-tinta-mute/50', pctEmpate, 1)}
+        {segmento('bg-cyan', pctVisitante, 2)}
       </div>
 
       {/* Tabla mono */}

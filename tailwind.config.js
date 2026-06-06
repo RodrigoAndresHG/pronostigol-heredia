@@ -62,10 +62,20 @@ export default {
         editorial: 'cubic-bezier(0.2, 0, 0, 1)',
       },
       animation: {
-        // Únicas animaciones permitidas: revelaciones sutiles. Sin rebotes.
+        // Revelaciones sutiles + capas del hero. Sin rebotes.
         'fade-up': 'fadeUp 0.5s cubic-bezier(0.2, 0, 0, 1)',
         'fade-in': 'fadeIn 0.6s ease-out',
         'pulse-señal': 'pulseSenal 2s ease-in-out infinite',
+        // Hero con vida (CSS puro, GPU-friendly):
+        'ken-burns': 'kenBurns 40s ease-in-out infinite alternate',
+        respira: 'respira 9s ease-in-out infinite',
+        scanline: 'scanline 8s linear infinite',
+        // Cuenta regresiva:
+        'flip-out': 'flipOut 0.28s cubic-bezier(0.2, 0, 0, 1) forwards',
+        'flip-in': 'flipIn 0.28s cubic-bezier(0.2, 0, 0, 1)',
+        latido: 'latido 0.4s cubic-bezier(0.2, 0, 0, 1)',
+        // Clímax de consenso en la mesa de deliberación:
+        'glow-consenso': 'glowConsenso 0.5s ease-out',
       },
       keyframes: {
         fadeUp: {
@@ -79,6 +89,35 @@ export default {
         pulseSenal: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.4' },
+        },
+        kenBurns: {
+          '0%': { transform: 'scale(1.06) translate(0, 0)' },
+          '100%': { transform: 'scale(1.12) translate(-1.5%, -1.5%)' },
+        },
+        respira: {
+          '0%, 100%': { opacity: '0.45', transform: 'scale(1)' },
+          '50%': { opacity: '0.9', transform: 'scale(1.08)' },
+        },
+        scanline: {
+          '0%': { transform: 'translateY(0)' },
+          '100%': { transform: 'translateY(100px)' },
+        },
+        flipOut: {
+          '0%': { transform: 'translateY(0)', opacity: '1' },
+          '100%': { transform: 'translateY(-100%)', opacity: '0' },
+        },
+        flipIn: {
+          '0%': { transform: 'translateY(60%)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        latido: {
+          '0%': { transform: 'scale(1.06)' },
+          '100%': { transform: 'scale(1)' },
+        },
+        glowConsenso: {
+          '0%': { boxShadow: '0 0 0px 0px rgba(0,210,122,0)' },
+          '40%': { boxShadow: '0 0 18px 2px rgba(0,210,122,0.45)' },
+          '100%': { boxShadow: '0 0 0px 0px rgba(0,210,122,0)' },
         },
       },
     },

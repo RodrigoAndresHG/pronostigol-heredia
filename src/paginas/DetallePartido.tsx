@@ -7,9 +7,8 @@ import { useAdmin } from '../lib/useAdmin.js';
 import { usePrediccionApi, type EstadoApi } from '../lib/usePrediccionApi.js';
 import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 import BarraProbabilidad from '../componentes/BarraProbabilidad';
-import TarjetaIA from '../componentes/TarjetaIA';
 import TarjetaIASkeleton from '../componentes/TarjetaIASkeleton';
-import VeredictoSintesis from '../componentes/VeredictoSintesis';
+import MesaDeliberacion from '../componentes/MesaDeliberacion';
 import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
 import { CanalWhatsApp } from '../componentes/Llamados';
@@ -317,8 +316,6 @@ function PrediccionPublicada({
 }) {
   return (
     <div className="space-y-8">
-      <VeredictoSintesis veredicto={prediccion.veredicto} nota={prediccion.notaVeredicto} />
-
       <div className="flex items-center justify-between font-mono text-[11px] text-tinta-mute">
         <span className="uppercase tracking-wide">
           {guardadaEn ? `Publicada ${formatearFecha(guardadaEn)}` : 'Guardada'}
@@ -330,30 +327,12 @@ function PrediccionPublicada({
         )}
       </div>
 
-      <section className="rounded-lg bg-tinta-tarjeta border border-tinta-linea p-6">
-        <BarraProbabilidad
-          kicker="Capa 2 · Probabilidad final (consenso de 3 IAs)"
-          local={prediccion.probabilidadFinal.local}
-          empate={prediccion.probabilidadFinal.empate}
-          visitante={prediccion.probabilidadFinal.visitante}
-          codigoLocal={codigoLocal}
-          codigoVisitante={codigoVisitante}
-        />
-      </section>
-
-      <section>
-        <p className="kicker">Lo que dijo cada IA</p>
-        <div className="mt-4 grid gap-5 lg:grid-cols-3">
-          {prediccion.respuestasIA.map((r) => (
-            <TarjetaIA
-              key={r.ia}
-              respuesta={r}
-              codigoLocal={codigoLocal}
-              codigoVisitante={codigoVisitante}
-            />
-          ))}
-        </div>
-      </section>
+      {/* La pieza estrella: el debate de las 3 IAs en vivo */}
+      <MesaDeliberacion
+        prediccion={prediccion}
+        codigoLocal={codigoLocal}
+        codigoVisitante={codigoVisitante}
+      />
 
       <SenalValor prediccion={prediccion} />
 

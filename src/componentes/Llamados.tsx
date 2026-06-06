@@ -1,4 +1,5 @@
 import { WHATSAPP_CANAL, lmsConSeguimiento } from '../marca/enlaces.ts';
+import IconoWhatsApp from './IconoWhatsApp';
 
 /**
  * Módulos de captación de tráfico — editoriales, no anuncios.
@@ -11,26 +12,9 @@ import { WHATSAPP_CANAL, lmsConSeguimiento } from '../marca/enlaces.ts';
  *   - "banda": módulo completo con kicker + titular Fraunces + CTA.
  *   - "linea": fila compacta para cierres de página sin robar protagonismo.
  *
- * Estética: superficie del mismo tono midnight, un solo acento. Parecen
- * parte del contenido, no un banner pegado.
+ * Estética: superficie del mismo tono midnight, un solo acento. El logo de
+ * WhatsApp usa su verde oficial #25D366 (única excepción cromática autorizada).
  */
-
-/** Glifo de burbuja de chat minimal (sin logo de marca registrada). */
-function GlifoChat({ className = '' }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" aria-hidden="true">
-      <path
-        d="M4 5h16v11H8l-4 4V5z"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinejoin="round"
-      />
-      <circle cx="9" cy="10.5" r="1" fill="currentColor" />
-      <circle cx="12" cy="10.5" r="1" fill="currentColor" />
-      <circle cx="15" cy="10.5" r="1" fill="currentColor" />
-    </svg>
-  );
-}
 
 // ─── Canal de WhatsApp ───────────────────────────────────────────────
 
@@ -50,7 +34,7 @@ export function CanalWhatsApp({
         className="group flex items-center justify-between gap-4 rounded-lg border border-verde/25 bg-verde/[0.05] px-5 py-4 hover:border-verde/50 transition-colors duration-200 ease-editorial"
       >
         <span className="flex items-center gap-3">
-          <GlifoChat className="w-5 h-5 text-verde flex-shrink-0" />
+          <IconoWhatsApp className="w-5 h-5 flex-shrink-0 text-[#25D366]" />
           <span className="text-[15px] text-tinta-cuerpo">
             Recibe cada {contexto} en el{' '}
             <span className="text-tinta-titulo font-semibold">Canal de WhatsApp</span>
@@ -66,7 +50,7 @@ export function CanalWhatsApp({
   return (
     <section className="rounded-lg border border-verde/25 bg-verde/[0.05] p-6 sm:p-8">
       <div className="flex items-center gap-3">
-        <GlifoChat className="w-6 h-6 text-verde" />
+        <IconoWhatsApp className="w-6 h-6 text-[#25D366]" />
         <p className="kicker text-verde">Canal de WhatsApp · gratis</p>
       </div>
       <h3 className="mt-3 font-display text-2xl sm:text-3xl font-semibold text-tinta-titulo leading-snug max-w-[24ch]">
