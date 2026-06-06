@@ -121,12 +121,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           )
         ),
         caja(
-          { flexDirection: 'column', flexGrow: 1, paddingBottom: 8 },
+          { flexDirection: 'column', flexGrow: 1, minWidth: 0, paddingBottom: 8 },
           caja(
             { width: '100%', height: 14, borderRadius: 7, overflow: 'hidden', backgroundColor: C.linea },
-            caja({ width: `${pl}%`, backgroundColor: C.verde }),
-            caja({ width: `${pe}%`, backgroundColor: '#475569' }),
-            caja({ width: `${pv}%`, backgroundColor: C.cyan })
+            // Los dos primeros segmentos con ancho fijo; el último rellena el
+            // resto con flexGrow para absorber el redondeo y NO desbordarse.
+            caja({ width: `${pl}%`, flexShrink: 0, backgroundColor: C.verde }),
+            caja({ width: `${pe}%`, flexShrink: 0, backgroundColor: '#475569' }),
+            caja({ flexGrow: 1, backgroundColor: C.cyan })
           ),
           caja(
             { fontFamily: 'JetBrains Mono', fontSize: 22, marginTop: 14 },
@@ -168,6 +170,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     {
       width: '1200px',
       height: '630px',
+      boxSizing: 'border-box',
       flexDirection: 'column',
       justifyContent: 'space-between',
       padding: '56px 64px',
