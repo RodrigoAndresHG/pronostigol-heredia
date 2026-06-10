@@ -55,13 +55,18 @@ function TarjetaIA({
       }
     : {};
 
-  // Caso de error.
+  // Caso de error: mensaje limpio y honesto, nunca el error técnico crudo
+  // (que puede filtrar detalles de API y se ve poco profesional).
   if (respuesta.error) {
     return (
-      <motion.div className="rounded-lg border border-tinta-linea bg-tinta-elevado/50 p-5" {...entrada}>
+      <motion.div className="min-w-0 rounded-lg border border-tinta-linea bg-tinta-elevado/50 p-5" {...entrada}>
         <CabeceraIA ia={respuesta.ia} id={id} />
-        <p className="mt-4 font-mono text-xs text-alerta/90 leading-relaxed">
-          NO DISPONIBLE — {respuesta.error}
+        <p className="mt-4 font-mono text-[11px] uppercase tracking-wide text-tinta-mute">
+          No disponible
+        </p>
+        <p className="mt-2 font-sans text-sm text-tinta-cuerpo leading-relaxed">
+          {respuesta.ia} no entregó una respuesta válida esta vez. El veredicto
+          se sintetizó con las demás IAs.
         </p>
       </motion.div>
     );

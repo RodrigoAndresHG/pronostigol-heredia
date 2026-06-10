@@ -55,9 +55,13 @@ const FILTROS: Record<string, (id: string) => boolean> = {
   todos: () => true,
 };
 
-const filtro = FILTROS[alcance];
+// Permite también un ID de partido exacto (p. ej. "E-MD1-2") para probar uno.
+const ES_ID_PARTIDO = /^[A-L]-MD[123]-\d+$/.test(alcance);
+const filtro = ES_ID_PARTIDO ? (id: string) => id === alcance : FILTROS[alcance];
 if (!filtro) {
-  console.error(`❌ Alcance desconocido: "${alcance}". Usa: md1 | md2 | md3 | todos`);
+  console.error(
+    `❌ Alcance desconocido: "${alcance}". Usa: md1 | md2 | md3 | todos | un-ID-como-E-MD1-2`
+  );
   process.exit(1);
 }
 
