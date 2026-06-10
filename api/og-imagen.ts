@@ -3,7 +3,11 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { ImageResponse } from '@vercel/og';
 import { resolverDatosPartido } from './_lib/datosPartido.js';
 import { FUENTES_OG } from './_fontsData.js';
-import type { DistribucionResultado } from '../src/tipos/index.js';
+import type {
+  DistribucionResultado,
+  Prediccion,
+  RespuestaIA,
+} from '../src/tipos/index.js';
 
 /**
  * Genera la imagen compartible (1200×630 PNG) de una predicción.
@@ -56,6 +60,160 @@ function porcentajes(d: DistribucionResultado): [number, number, number] {
   return [v[0], v[1], v[2]];
 }
 
+/** Párrafo que envuelve (Satori parte el texto dentro del ancho dado). */
+function parrafo(style: Estilo, contenido: string) {
+  return h('div', { style: { display: 'flex', ...style } }, contenido);
+}
+
+function corta(s: string, n: number): string {
+  return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
+}
+
+/** El resultado dominante de una distribución, con su etiqueta y color. */
+function dominante(
+  d: DistribucionResultado,
+  codigoLocal: string,
+  codigoVisitante: string
+): { pct: number; etiqueta: string; color: string } {
+  const [pl, pe, pv] = porcentajes(d);
+  const maxima = Math.max(pl, pe, pv);
+  if (maxima === pl) return { pct: pl, etiqueta: `GANA ${codigoLocal}`, color: C.verde };
+  if (maxima === pv) return { pct: pv, etiqueta: `GANA ${codigoVisitante}`, color: C.cyan };
+  return { pct: pe, etiqueta: 'EMPATE', color: C.mute };
+}
+
+/**
+ * Tarjeta vertical 1080×1920 "El Choque de IAs": enfrenta cara a cara las
+ * dos IAs más opuestas en P(local). El desacuerdo, que antes moría en una
+ * línea de texto gris, se vuelve el objeto compartible estrella.
+ */
+function tarjetaChoque(
+  pred: Prediccion | null,
+  codigoLocal: string,
+  codigoVisitante: string,
+  nombreLocal: string,
+  nombreVisitante: string,
+  contexto: string
+): React.ReactNode {
+  const validas = (pred?.respuestasIA ?? []).filter((r) => !r.error);
+  const esConsenso = pred?.veredicto === 'consenso';
+
+  // Las dos IAs más opuestas en P(local): una empuja al local, otra al rival.
+  let duelo: React.ReactNode;
+  if (validas.length >= 2) {
+    const ordenadas = [...validas].sort(
+      (a, b) => b.probabilidad.local - a.probabilidad.local
+    );
+    const alta = ordenadas[0];
+    const baja = ordenadas[ordenadas.length - 1];
+    duelo = caja(
+      { flexDirection: 'column', width: '100%' },
+      panelIA(alta, codigoLocal, codigoVisitante),
+      caja(
+        { justifyContent: 'center', alignItems: 'center', padding: '14px 0' },
+        txt(
+          { fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 44, color: C.mute, letterSpacing: 4 },
+          'VS'
+        )
+      ),
+      panelIA(baja, codigoLocal, codigoVisitante)
+    );
+  } else {
+    duelo = caja(
+      { padding: '40px 0' },
+      txt(
+        { fontFamily: 'Inter', fontSize: 30, color: C.mute },
+        'Predicción de las 3 IAs · pronostigol.rodriheredia.com'
+      )
+    );
+  }
+
+  const colorHead = esConsenso ? C.verde : C.cyan;
+
+  return caja(
+    {
+      width: '1080px',
+      height: '1920px',
+      boxSizing: 'border-box',
+      flexDirection: 'column',
+      justifyContent: 'space-between',
+      padding: '72px 64px',
+      fontFamily: 'Inter',
+      color: C.titulo,
+      background: `linear-gradient(160deg, ${C.fondoAlt} 0%, ${C.fondo} 50%, ${C.fondo} 100%)`,
+    },
+    // Cabecera + héroe + titular
+    caja(
+      { flexDirection: 'column' },
+      caja(
+        { justifyContent: 'space-between', alignItems: 'center', marginBottom: 56 },
+        txt(
+          { fontFamily: 'JetBrains Mono', fontSize: 24, letterSpacing: 4, color: C.verde },
+          'PRONOSTIGOL HEREDIA'
+        ),
+        txt({ fontFamily: 'JetBrains Mono', fontSize: 20, letterSpacing: 2, color: C.mute }, contexto)
+      ),
+      caja(
+        { alignItems: 'center', justifyContent: 'center' },
+        txt({ fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 132, color: C.titulo, lineHeight: 1 }, codigoLocal),
+        txt({ fontFamily: 'Inter', fontStyle: 'italic', fontSize: 44, color: C.mute, margin: '0 36px' }, 'vs'),
+        txt({ fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 132, color: C.titulo, lineHeight: 1 }, codigoVisitante)
+      ),
+      caja(
+        { justifyContent: 'center', marginTop: 14 },
+        txt({ fontFamily: 'Inter', fontSize: 30, color: C.cuerpo }, `${nombreLocal} — ${nombreVisitante}`)
+      ),
+      caja(
+        { justifyContent: 'center', marginTop: 40 },
+        txt(
+          { fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 46, letterSpacing: 2, color: colorHead, textAlign: 'center' },
+          esConsenso ? 'LAS 3 IAs COINCIDEN' : 'LAS IAs NO SE PONEN DE ACUERDO'
+        )
+      )
+    ),
+    // El duelo
+    duelo,
+    // Pie
+    caja(
+      { justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${C.linea}`, paddingTop: 24 },
+      txt({ fontFamily: 'JetBrains Mono', fontSize: 22, color: C.mute }, 'pronostigol.rodriheredia.com'),
+      txt({ fontFamily: 'JetBrains Mono', fontSize: 22, color: C.verde }, 'CLAUDE · GPT · GEMINI')
+    )
+  );
+}
+
+/** Un panel del duelo: nombre de la IA, su pronóstico dominante y su frase. */
+function panelIA(
+  r: RespuestaIA,
+  codigoLocal: string,
+  codigoVisitante: string
+): React.ReactNode {
+  const dom = dominante(r.probabilidad, codigoLocal, codigoVisitante);
+  return caja(
+    {
+      flexDirection: 'column',
+      width: '100%',
+      border: `1px solid ${dom.color}66`,
+      borderRadius: 16,
+      padding: '32px 36px',
+      backgroundColor: '#0F1E3399',
+    },
+    caja(
+      { justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 },
+      txt({ fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 38, color: C.titulo }, r.ia),
+      caja(
+        { flexDirection: 'column', alignItems: 'flex-end' },
+        txt({ fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 52, color: dom.color, lineHeight: 1 }, `${dom.pct}%`),
+        txt({ fontFamily: 'JetBrains Mono', fontSize: 19, letterSpacing: 1, color: C.mute, marginTop: 6 }, dom.etiqueta)
+      )
+    ),
+    parrafo(
+      { fontFamily: 'Inter', fontSize: 29, lineHeight: 1.4, color: C.cuerpo, width: '100%' },
+      corta(r.explicacion, 190)
+    )
+  );
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const partidoId = String(req.query.partidoId ?? '');
 
@@ -75,6 +233,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : 'MUNDIAL 2026';
 
   const pred = datos?.prediccion ?? null;
+
+  // ── Formato vertical 9:16 — "El Choque de IAs" (Stories/Reels/TikTok) ──
+  if (String(req.query.formato ?? '') === 'vertical') {
+    const tarjetaV = tarjetaChoque(
+      pred,
+      codigoLocal,
+      codigoVisitante,
+      nombreLocal,
+      nombreVisitante,
+      contexto
+    );
+    const imagenV = new ImageResponse(tarjetaV, {
+      width: 1080,
+      height: 1920,
+      fonts: FUENTES_OG,
+    });
+    const bufferV = Buffer.from(await imagenV.arrayBuffer());
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+    return res.status(200).send(bufferV);
+  }
 
   // ── Bloque de datos (predicción) ──────────────────────────────────
   let bloqueDatos: React.ReactNode;

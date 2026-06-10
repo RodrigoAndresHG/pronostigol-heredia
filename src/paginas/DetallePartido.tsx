@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { partidoPorId } from '../datos/partidos.js';
 import { equipoPorId } from '../datos/equipos.js';
+import { hechosDePartido } from '../datos/dossiers.js';
 import { calcularProbabilidadBase } from '../lib/modeloBase.js';
 import { useAdmin } from '../lib/useAdmin.js';
 import { usePrediccionApi, type EstadoApi } from '../lib/usePrediccionApi.js';
@@ -11,6 +12,8 @@ import TarjetaIASkeleton from '../componentes/TarjetaIASkeleton';
 import MesaDeliberacion from '../componentes/MesaDeliberacion';
 import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
+import AcordeonDossier from '../componentes/AcordeonDossier';
+import AnatomiaDesacuerdo from '../componentes/AnatomiaDesacuerdo';
 import { CanalWhatsApp } from '../componentes/Llamados';
 import BotonCompartir from '../componentes/BotonCompartir';
 import FotoEstadio from '../componentes/visual/FotoEstadio';
@@ -286,7 +289,7 @@ function BloqueCargando() {
           Cada modelo razona sobre el mismo prompt. 5–20 segundos.
         </p>
       </div>
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         <TarjetaIASkeleton ia="Claude" />
         <TarjetaIASkeleton ia="GPT" />
         <TarjetaIASkeleton ia="Gemini" />
@@ -314,6 +317,18 @@ function PrediccionPublicada({
   idPartido: string;
   tituloCompartir: string;
 }) {
+  // Los hechos que recibieron las IAs: preferimos el dossier guardado en la
+  // predicción (lo que realmente vieron); si es una predicción antigua sin
+  // dossier, caemos a los hechos actuales del partido.
+  const partido = partidoPorId(prediccion.partidoId);
+  const hechos =
+    prediccion.dossier ?? (partido ? hechosDePartido(partido) : null);
+  const nombreLocal = partido ? equipoPorId(partido.equipoLocalId).nombre : codigoLocal;
+  const nombreVisitante = partido
+    ? equipoPorId(partido.equipoVisitanteId).nombre
+    : codigoVisitante;
+  const esDesacuerdo = prediccion.veredicto === 'desacuerdo';
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between font-mono text-[11px] text-tinta-mute">
@@ -334,12 +349,36 @@ function PrediccionPublicada({
         codigoVisitante={codigoVisitante}
       />
 
+      {/* Los hechos verificados que recibieron las IAs (anclaje visible) */}
+      {hechos && (
+        <AcordeonDossier
+          hechos={hechos}
+          codigoLocal={codigoLocal}
+          codigoVisitante={codigoVisitante}
+          nombreLocal={nombreLocal}
+          nombreVisitante={nombreVisitante}
+        />
+      )}
+
+      {/* Anatomía del desacuerdo: sólo cuando las IAs divergen */}
+      {esDesacuerdo && (
+        <AnatomiaDesacuerdo
+          prediccion={prediccion}
+          codigoLocal={codigoLocal}
+          codigoVisitante={codigoVisitante}
+        />
+      )}
+
       <SenalValor prediccion={prediccion} />
 
       {/* Compartir como imagen — el motor de viralidad */}
       <section className="rounded-lg border border-tinta-linea bg-tinta-tarjeta p-5">
         <p className="kicker mb-3">Compartir</p>
-        <BotonCompartir idPartido={idPartido} titulo={tituloCompartir} />
+        <BotonCompartir
+          idPartido={idPartido}
+          titulo={tituloCompartir}
+          veredicto={prediccion.veredicto}
+        />
       </section>
 
       {/* Captación: acaba de consumir una predicción → máximo interés */}

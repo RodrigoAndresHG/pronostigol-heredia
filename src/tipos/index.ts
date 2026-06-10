@@ -96,6 +96,35 @@ export interface RespuestaIA {
 /** Veredicto sintetizado de las 3 IAs. */
 export type Veredicto = 'consenso' | 'desacuerdo';
 
+/**
+ * Hechos verificados de un equipo a una fecha concreta — el "anclaje"
+ * que reciben las IAs para que NO inventen contexto desde su memoria
+ * de entrenamiento (que tiene fecha de corte). Cada dato es público y
+ * auditable. Esto es lo que mata alucinaciones como "DT: Sánchez Bas".
+ */
+export interface DossierEquipo {
+  /** Director técnico ACTUAL. El dato que más se desactualiza. */
+  dt: string;
+  /** Desde cuándo dirige, p. ej. "ago 2024". */
+  dtDesde?: string;
+  /** Jugador figura/referente. */
+  estrella?: string;
+  /** Forma reciente / cómo clasificó, en una frase. */
+  formaReciente?: string;
+  /** Narrativa del torneo, en una frase (debutante, campeón AFCON 2024…). */
+  notaTorneo?: string;
+  /** Confianza de la verificación con fuentes. */
+  confianza: 'alta' | 'media' | 'baja';
+}
+
+/** Dossier de un partido: los hechos de ambos equipos + fecha de captura. */
+export interface HechosPartido {
+  local: DossierEquipo;
+  visitante: DossierEquipo;
+  /** Fecha (YYYY-MM-DD) del dataset de hechos. Se muestra al usuario. */
+  capturadoEl: string;
+}
+
 export interface SenalValor {
   direccion: 'local' | 'empate' | 'visitante';
   /** Diferencia entre prob. final y prob. implícita del mercado, en puntos porcentuales. */
@@ -120,6 +149,12 @@ export interface Prediccion {
   cuotaMercado?: DistribucionResultado;
   /** Si hay diferencia significativa con el mercado, se llena. */
   senalValor?: SenalValor;
+  /**
+   * Hechos verificados que recibieron las IAs al generar esta predicción.
+   * Se guarda en el payload para auditoría: prueba con qué datos razonaron.
+   * Ausente en predicciones antiguas (anteriores al anclaje de datos).
+   */
+  dossier?: HechosPartido;
 }
 
 // ─── Historial ───────────────────────────────────────────────────────

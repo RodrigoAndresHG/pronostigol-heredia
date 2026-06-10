@@ -78,7 +78,7 @@ function TarjetaIA({
 
   return (
     <motion.div
-      className="rounded-lg border border-tinta-linea bg-tinta-elevado p-5 transition-all duration-200 ease-editorial hover:border-tinta-lineaFuerte"
+      className="min-w-0 rounded-lg border border-tinta-linea bg-tinta-elevado p-5 transition-all duration-200 ease-editorial hover:border-tinta-lineaFuerte"
       {...entrada}
     >
       <CabeceraIA ia={respuesta.ia} id={id} confianza={respuesta.confianza} modoMesa={modoMesa} arranque={arranque} />

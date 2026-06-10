@@ -1,6 +1,7 @@
 import type { Prediccion } from '../../src/tipos/index.js';
 import { partidoPorId } from '../../src/datos/partidos.js';
 import { calcularProbabilidadBase } from '../../src/lib/modeloBase.js';
+import { hechosDePartido } from '../../src/datos/dossiers.js';
 import { construirPrompt } from './prompt.js';
 import { consultarClaude } from './iaClaude.js';
 import { consultarGPT } from './iaGPT.js';
@@ -33,8 +34,16 @@ export async function predecir(partidoId: string): Promise<Prediccion> {
   const { probabilidad: probabilidadBase, desglose } =
     calcularProbabilidadBase(partido);
 
-  // Capa 2 — las 3 IAs en paralelo
-  const { sistema, usuario } = construirPrompt(partido, probabilidadBase, desglose);
+  // Capa 1.5 — dossier de hechos verificados que ancla a las IAs.
+  const dossier = hechosDePartido(partido);
+
+  // Capa 2 — las 3 IAs en paralelo, con el MISMO prompt anclado a hechos.
+  const { sistema, usuario } = construirPrompt(
+    partido,
+    probabilidadBase,
+    desglose,
+    dossier
+  );
   const [claude, gpt, gemini] = await Promise.all([
     consultarClaude(sistema, usuario),
     consultarGPT(sistema, usuario),
@@ -52,6 +61,8 @@ export async function predecir(partidoId: string): Promise<Prediccion> {
     probabilidadFinal,
     veredicto,
     notaVeredicto,
+    // Guardamos los hechos usados para auditoría (prueba con qué razonaron).
+    ...(dossier ? { dossier } : {}),
     // cuotaMercado y senalValor se rellenan en Fase 4 con The Odds API.
   };
 }

@@ -84,7 +84,7 @@ function MesaDeliberacion({
       </div>
 
       {/* Las 3 IAs deliberando */}
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {prediccion.respuestasIA.map((r, i) => (
           <TarjetaIA
             key={r.ia}

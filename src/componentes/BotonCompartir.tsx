@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { WHATSAPP_CANAL } from '../marca/enlaces.ts';
+import type { Veredicto } from '../tipos';
 
 /**
  * Botón "Compartir" mobile-first.
@@ -19,20 +20,28 @@ interface Props {
   idPartido: string;
   /** Texto del título/descr. al compartir (ej. "México vs Sudáfrica"). */
   titulo: string;
+  /** Si es 'desacuerdo', se comparte la imagen vertical "Choque de IAs". */
+  veredicto?: Veredicto;
 }
 
 type Estado = 'idle' | 'copiado' | 'descargado' | 'error';
 
-function BotonCompartir({ idPartido, titulo }: Props) {
+function BotonCompartir({ idPartido, titulo, veredicto }: Props) {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [estado, setEstado] = useState<Estado>('idle');
 
-  const urlImagen = `/api/og-imagen?partidoId=${encodeURIComponent(idPartido)}`;
+  // El desacuerdo se comparte como imagen vertical 9:16 ("el choque"):
+  // formato nativo de Stories/Reels/TikTok y el momento más viral.
+  const esChoque = veredicto === 'desacuerdo';
+  const urlImagen = `/api/og-imagen?partidoId=${encodeURIComponent(idPartido)}${esChoque ? '&formato=vertical' : ''}`;
   const urlCompartir =
     typeof window !== 'undefined'
       ? `${window.location.origin}/partido/${idPartido}`
       : `https://pronostigol.rodriheredia.com/partido/${idPartido}`;
-  const texto = `${titulo} — Predicción de 3 IAs · PronostiGol HeredIA`;
+  const texto = esChoque
+    ? `${titulo} — Las 3 IAs NO se ponen de acuerdo · PronostiGol HeredIA`
+    : `${titulo} — Predicción de 3 IAs · PronostiGol HeredIA`;
+  const etiquetaBoton = esChoque ? 'Compartir el choque de IAs' : 'Compartir predicción';
 
   // Pre-cargar la imagen como File (antes del click).
   useEffect(() => {
@@ -42,7 +51,7 @@ function BotonCompartir({ idPartido, titulo }: Props) {
         const res = await fetch(urlImagen);
         if (!res.ok) return;
         const blob = await res.blob();
-        const f = new File([blob], `pronostigol-${idPartido}.png`, {
+        const f = new File([blob], `pronostigol-${idPartido}${esChoque ? '-choque' : ''}.png`, {
           type: blob.type || 'image/png',
         });
         if (!cancelado) setArchivo(f);
@@ -53,7 +62,7 @@ function BotonCompartir({ idPartido, titulo }: Props) {
     return () => {
       cancelado = true;
     };
-  }, [urlImagen, idPartido]);
+  }, [urlImagen, idPartido, esChoque]);
 
   const puedeCompartirImagen =
     typeof navigator !== 'undefined' &&
@@ -123,7 +132,7 @@ function BotonCompartir({ idPartido, titulo }: Props) {
           <circle cx="18" cy="19" r="3" />
           <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
         </svg>
-        Compartir predicción
+        {etiquetaBoton}
       </button>
 
       {/* Fallbacks visibles en desktop / sin Web Share de archivos */}

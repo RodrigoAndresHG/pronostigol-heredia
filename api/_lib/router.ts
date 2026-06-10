@@ -1,6 +1,10 @@
 import { predecir } from './core.js';
 import { leerUltimaPrediccion, guardarPrediccion } from './almacen.js';
 import { esAdmin } from './admin.js';
+import { partidoPorId } from '../../src/datos/partidos.js';
+import { calcularProbabilidadBase } from '../../src/lib/modeloBase.js';
+import { hechosDePartido } from '../../src/datos/dossiers.js';
+import { construirPrompt } from './prompt.js';
 
 /**
  * Router puro de /api/predecir, sin conocimiento de HTTP framework.
@@ -40,6 +44,26 @@ async function manejarGet(req: EntradaApi): Promise<SalidaApi> {
   if (!partidoId || typeof partidoId !== 'string') {
     return { status: 400, json: { error: 'Falta partidoId en la query.' } };
   }
+
+  // ?soloPrompt=1 → devuelve el prompt EXACTO (anclado a hechos) sin llamar
+  // a las IAs ni a Supabase. Alimenta el botón "Copiar este caso como prompt"
+  // de la Anatomía del Desacuerdo: transparencia operativa total.
+  if (req.query?.soloPrompt) {
+    const partido = partidoPorId(partidoId);
+    if (!partido) {
+      return { status: 404, json: { error: 'Partido no encontrado.' } };
+    }
+    const { probabilidad, desglose } = calcularProbabilidadBase(partido);
+    const dossier = hechosDePartido(partido);
+    const { sistema, usuario } = construirPrompt(
+      partido,
+      probabilidad,
+      desglose,
+      dossier
+    );
+    return { status: 200, json: { sistema, usuario } };
+  }
+
   try {
     const guardada = await leerUltimaPrediccion(partidoId);
     if (!guardada) {
