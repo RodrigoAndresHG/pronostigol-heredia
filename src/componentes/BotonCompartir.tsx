@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { WHATSAPP_CANAL } from '../marca/enlaces.ts';
+import { canalConSeguimiento } from '../marca/enlaces.ts';
 import type { Veredicto } from '../tipos';
 
 /**
@@ -170,7 +170,7 @@ function BotonCompartir({ idPartido, titulo, veredicto }: Props) {
 
       {/* Anclaje viral discreto: el canal */}
       <a
-        href={WHATSAPP_CANAL}
+        href={canalConSeguimiento('compartir')}
         target="_blank"
         rel="noopener noreferrer"
         className="ml-auto font-mono text-[12px] text-tinta-mute hover:text-verde transition-colors"

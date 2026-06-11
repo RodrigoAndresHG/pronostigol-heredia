@@ -1,7 +1,10 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { Analytics } from '@vercel/analytics/react';
 import BarraNavegacion from './componentes/BarraNavegacion';
 import AvisoLegal from './componentes/AvisoLegal';
+import BarraCaptura from './captacion/BarraCaptura';
+import ModalCaptura from './captacion/ModalCaptura';
 import Inicio from './paginas/Inicio';
 import Calendario from './paginas/Calendario';
 import DetallePartido from './paginas/DetallePartido';
@@ -47,6 +50,11 @@ function App() {
       </main>
 
       <AvisoLegal />
+
+      {/* Captación de audiencia (Mundial 2026) — componentes aislados */}
+      <BarraCaptura />
+      <ModalCaptura />
+      <Analytics />
     </div>
   );
 }

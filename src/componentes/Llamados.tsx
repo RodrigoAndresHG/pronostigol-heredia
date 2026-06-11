@@ -1,4 +1,4 @@
-import { WHATSAPP_CANAL, lmsConSeguimiento } from '../marca/enlaces.ts';
+import { canalConSeguimiento, lmsConSeguimiento } from '../marca/enlaces.ts';
 import IconoWhatsApp from './IconoWhatsApp';
 
 /**
@@ -28,7 +28,7 @@ export function CanalWhatsApp({
   if (variante === 'linea') {
     return (
       <a
-        href={WHATSAPP_CANAL}
+        href={canalConSeguimiento('canal-linea')}
         target="_blank"
         rel="noopener noreferrer"
         className="group flex items-center justify-between gap-4 rounded-lg border border-verde/25 bg-verde/[0.05] px-5 py-4 hover:border-verde/50 transition-colors duration-200 ease-editorial"
@@ -61,7 +61,7 @@ export function CanalWhatsApp({
         Sin spam — solo predicciones.
       </p>
       <a
-        href={WHATSAPP_CANAL}
+        href={canalConSeguimiento('canal-banda')}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 mt-5 px-6 py-3 rounded-md bg-verde text-tinta-fondo font-semibold text-[15px] hover:bg-verde-hover transition-colors"
