@@ -1,4 +1,5 @@
 import { PARTIDOS } from '../../src/datos/partidos.js';
+import type { GoleadorAgregado } from '../../src/tipos/index.js';
 
 /**
  * Fuente de resultados y goleadores: openfootball/worldcup.json.
@@ -42,6 +43,8 @@ export interface Goleador {
 /** Un resultado ya alineado a la orientación local/visitante de NUESTRO partido. */
 export interface ResultadoIngerible {
   partidoId: string;
+  equipoLocalId: string;
+  equipoVisitanteId: string;
   golesLocal: number;
   golesVisitante: number;
   goleadoresLocal: Goleador[];
@@ -101,6 +104,8 @@ export function emparejarMatches(matches: MatchOF[]): ResultadoIngerible[] {
     const team1EsLocal = partido.equipoLocalId === iso1;
     salida.push({
       partidoId: partido.id,
+      equipoLocalId: partido.equipoLocalId,
+      equipoVisitanteId: partido.equipoVisitanteId,
       golesLocal: team1EsLocal ? ft[0] : ft[1],
       golesVisitante: team1EsLocal ? ft[1] : ft[0],
       goleadoresLocal: mapGoleadores(team1EsLocal ? m.goals1 : m.goals2),
@@ -108,6 +113,40 @@ export function emparejarMatches(matches: MatchOF[]): ResultadoIngerible[] {
     });
   }
   return salida;
+}
+
+/**
+ * Agrega los goleadores de varios partidos en una tabla del torneo,
+ * agrupando por (equipo, jugador). Los autogoles NO cuentan para el
+ * goleador. PURA y testeable.
+ */
+export function agregarGoleadores(
+  resultados: ResultadoIngerible[]
+): GoleadorAgregado[] {
+  const mapa = new Map<string, GoleadorAgregado>();
+  const sumar = (nombre: string, equipoId: string, g: Goleador) => {
+    if (g.enContra) return; // un autogol no es gol del jugador
+    const clave = `${equipoId}|${nombre}`;
+    const acc = mapa.get(clave) ?? { nombre, equipoId, goles: 0, penales: 0 };
+    acc.goles += 1;
+    if (g.penal) acc.penales += 1;
+    mapa.set(clave, acc);
+  };
+  for (const r of resultados) {
+    for (const gl of r.goleadoresLocal) sumar(gl.nombre, r.equipoLocalId, gl);
+    for (const gv of r.goleadoresVisitante) sumar(gv.nombre, r.equipoVisitanteId, gv);
+  }
+  return [...mapa.values()].sort(
+    (a, b) => b.goles - a.goles || a.nombre.localeCompare(b.nombre)
+  );
+}
+
+/** Tabla de goleadores del torneo (en vivo desde openfootball). */
+export async function obtenerGoleadores(): Promise<GoleadorAgregado[]> {
+  const res = await fetch(URL_2026, { headers: { accept: 'application/json' } });
+  if (!res.ok) throw new Error(`openfootball respondió ${res.status}`);
+  const data = (await res.json()) as { matches?: MatchOF[] };
+  return agregarGoleadores(emparejarMatches(data.matches ?? []));
 }
 
 /**

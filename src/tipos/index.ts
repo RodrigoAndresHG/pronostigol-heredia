@@ -219,6 +219,16 @@ export interface Autopsia {
   notaDesacuerdo?: string;
 }
 
+/** Un goleador acumulado del torneo (para la tabla de goleadores). */
+export interface GoleadorAgregado {
+  nombre: string;
+  /** Código ISO3 del equipo del goleador. */
+  equipoId: string;
+  goles: number;
+  /** De cuántos de esos goles fueron de penal. */
+  penales: number;
+}
+
 /** Respuesta del endpoint /api/historial. */
 export interface HistorialResponse {
   partidosCalificados: number;

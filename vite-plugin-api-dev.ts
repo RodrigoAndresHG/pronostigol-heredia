@@ -77,9 +77,9 @@ export function apiDevPlugin(): Plugin {
           return;
         }
 
-        // /api/historial → endpoint JSON (track-record real). Shim de
+        // /api/historial y /api/goleadores → endpoints JSON. Shim de
         // VercelRequest/Response sobre el res de Node.
-        if (url.pathname === '/api/historial') {
+        if (url.pathname === '/api/historial' || url.pathname === '/api/goleadores') {
           try {
             const query: Record<string, string> = {};
             for (const [k, v] of url.searchParams.entries()) query[k] = v;
@@ -96,7 +96,7 @@ export function apiDevPlugin(): Plugin {
                 return this;
               },
             };
-            const mod = await server.ssrLoadModule('/api/historial.ts');
+            const mod = await server.ssrLoadModule(`${url.pathname}.ts`);
             await mod.default(vreq, vres);
           } catch (err) {
             res.statusCode = 500;

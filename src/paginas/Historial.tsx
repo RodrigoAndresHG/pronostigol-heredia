@@ -9,6 +9,7 @@ import { partidoPorId } from '../datos/partidos.js';
 import { equipoPorId } from '../datos/equipos.js';
 import { PuenteMetodo } from '../componentes/Llamados';
 import CurvaCalibracion from '../componentes/CurvaCalibracion';
+import GoleadoresTorneo from '../componentes/GoleadoresTorneo';
 
 /**
  * Historial editorial — el track-record REAL de la app (Fase 9).
@@ -140,6 +141,9 @@ function Historial() {
           </section>
         </>
       )}
+
+      {/* Goleadores del torneo (se auto-oculta hasta que haya goles) */}
+      <GoleadoresTorneo />
 
       {/* Captación: quien evalúa la credibilidad → al método (LMS) */}
       <div className="mt-12">

@@ -6,7 +6,8 @@
 
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
-import { emparejarMatches } from '../api/_lib/openfootball.js';
+import { emparejarMatches, agregarGoleadores } from '../api/_lib/openfootball.js';
+import type { ResultadoIngerible } from '../api/_lib/openfootball.js';
 
 test('empareja un partido jugado con nuestro calendario', () => {
   const r = emparejarMatches([
@@ -55,4 +56,42 @@ test('ignora equipos no reconocidos (placeholders de eliminatoria)', () => {
     { team1: 'Winner Group A', team2: 'Runner-up Group B', score: { ft: [1, 0] } },
   ]);
   assert.equal(r.length, 0);
+});
+
+test('agregarGoleadores suma por jugador y ordena por goles', () => {
+  const resultados: ResultadoIngerible[] = [
+    {
+      partidoId: 'X', equipoLocalId: 'ECU', equipoVisitanteId: 'CIV',
+      golesLocal: 2, golesVisitante: 1,
+      goleadoresLocal: [
+        { nombre: 'Valencia', minuto: 10 },
+        { nombre: 'Valencia', minuto: 50, penal: true },
+      ],
+      goleadoresVisitante: [{ nombre: 'Haller', minuto: 30 }],
+    },
+    {
+      partidoId: 'Y', equipoLocalId: 'ECU', equipoVisitanteId: 'GER',
+      golesLocal: 1, golesVisitante: 0,
+      goleadoresLocal: [{ nombre: 'Valencia', minuto: 20 }],
+      goleadoresVisitante: [],
+    },
+  ];
+  const tabla = agregarGoleadores(resultados);
+  const valencia = tabla.find((g) => g.nombre === 'Valencia')!;
+  assert.equal(valencia.goles, 3);
+  assert.equal(valencia.penales, 1);
+  assert.equal(valencia.equipoId, 'ECU');
+  assert.equal(tabla[0].nombre, 'Valencia'); // el máximo goleador va primero
+});
+
+test('los autogoles no cuentan para el goleador', () => {
+  const tabla = agregarGoleadores([
+    {
+      partidoId: 'Z', equipoLocalId: 'ECU', equipoVisitanteId: 'CIV',
+      golesLocal: 1, golesVisitante: 0,
+      goleadoresLocal: [{ nombre: 'Defensa', minuto: 5, enContra: true }],
+      goleadoresVisitante: [],
+    },
+  ]);
+  assert.equal(tabla.length, 0);
 });
