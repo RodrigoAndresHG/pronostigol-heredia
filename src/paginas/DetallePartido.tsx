@@ -14,10 +14,11 @@ import SenalValor from '../componentes/SenalValor';
 import DesgloseModeloBase from '../componentes/DesgloseModeloBase';
 import AcordeonDossier from '../componentes/AcordeonDossier';
 import AnatomiaDesacuerdo from '../componentes/AnatomiaDesacuerdo';
+import Autopsia from '../componentes/Autopsia';
 import { CanalWhatsApp } from '../componentes/Llamados';
 import BotonCompartir from '../componentes/BotonCompartir';
 import FotoEstadio from '../componentes/visual/FotoEstadio';
-import type { Prediccion } from '../tipos';
+import type { Autopsia as AutopsiaData, Prediccion } from '../tipos';
 
 /**
  * Detalle del partido — pieza central, editorial.
@@ -249,6 +250,7 @@ function BloqueCapa2({
     <PrediccionPublicada
       prediccion={estado.prediccion}
       guardadaEn={estado.guardadaEn}
+      autopsia={estado.autopsia}
       codigoAdmin={codigoAdmin}
       onRegenerar={onGenerar}
       codigoLocal={codigoLocal}
@@ -301,6 +303,7 @@ function BloqueCargando() {
 function PrediccionPublicada({
   prediccion,
   guardadaEn,
+  autopsia,
   codigoAdmin,
   onRegenerar,
   codigoLocal,
@@ -310,6 +313,7 @@ function PrediccionPublicada({
 }: {
   prediccion: Prediccion;
   guardadaEn: string | null;
+  autopsia: AutopsiaData | null;
   codigoAdmin: string | null;
   onRegenerar: () => void;
   codigoLocal: string;
@@ -348,6 +352,15 @@ function PrediccionPublicada({
         codigoLocal={codigoLocal}
         codigoVisitante={codigoVisitante}
       />
+
+      {/* La autopsia: si el partido ya se jugó, qué dijo cada IA vs qué pasó */}
+      {autopsia && (
+        <Autopsia
+          autopsia={autopsia}
+          codigoLocal={codigoLocal}
+          codigoVisitante={codigoVisitante}
+        />
+      )}
 
       {/* Los hechos verificados que recibieron las IAs (anclaje visible) */}
       {hechos && (

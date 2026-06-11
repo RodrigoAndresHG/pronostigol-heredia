@@ -195,6 +195,30 @@ export interface PartidoCalificado {
   consensoAcerto: boolean;
 }
 
+/** Cómo le fue a un actor en un partido ya jugado (para la Autopsia). */
+export interface AutopsiaActor {
+  actor: Actor;
+  acerto: boolean;
+  brier: number;
+  etiqueta: 'calibrada' | 'sobreconfiada' | 'cauta';
+  /** Probabilidad que ESTE actor le dio al resultado que de verdad pasó. */
+  probAlResultado: number;
+}
+
+/**
+ * La "autopsia" de un partido: lo que cada IA DIJO antes, contra lo que
+ * PASÓ. Se calcula en el servidor desde la predicción guardada (inmutable)
+ * y el resultado real.
+ */
+export interface Autopsia {
+  golesLocal: number;
+  golesVisitante: number;
+  resultadoReal: 'local' | 'empate' | 'visitante';
+  actores: AutopsiaActor[];
+  /** Si el partido fue de desacuerdo: quién ganó la discusión. */
+  notaDesacuerdo?: string;
+}
+
 /** Respuesta del endpoint /api/historial. */
 export interface HistorialResponse {
   partidosCalificados: number;

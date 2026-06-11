@@ -1,4 +1,10 @@
-import type { DistribucionResultado } from '../../src/tipos/index.js';
+import type {
+  Actor,
+  Autopsia,
+  AutopsiaActor,
+  DistribucionResultado,
+  Prediccion,
+} from '../../src/tipos/index.js';
 
 /**
  * Calificación de predicciones contra el resultado real — lógica PURA.
@@ -89,4 +95,57 @@ export function etiquetaCalibracion(
   }
   // Falló: si además estaba muy segura del favorito equivocado, sobreconfiada.
   return bs > 1 ? 'sobreconfiada' : 'calibrada';
+}
+
+/**
+ * Construye la "autopsia" de un partido jugado: cómo le fue a cada IA y al
+ * consenso contra el resultado real. Pura: recibe la predicción guardada
+ * (inmutable, generada antes del partido) y el marcador. No deriva tipos de
+ * resultados.ts para evitar dependencia circular.
+ */
+export function construirAutopsia(
+  prediccion: Prediccion,
+  golesLocal: number,
+  golesVisitante: number
+): Autopsia {
+  const resultadoReal = resultadoDesdeGoles(golesLocal, golesVisitante);
+
+  const actores: AutopsiaActor[] = [];
+  const agregar = (actor: Actor, d: DistribucionResultado) => {
+    actores.push({
+      actor,
+      acerto: acerto(d, resultadoReal),
+      brier: brier(d, resultadoReal),
+      etiqueta: etiquetaCalibracion(d, resultadoReal),
+      probAlResultado: d[resultadoReal],
+    });
+  };
+
+  for (const r of prediccion.respuestasIA) {
+    if (r.error) continue;
+    agregar(r.ia, r.probabilidad);
+  }
+  agregar('Consenso', prediccion.probabilidadFinal);
+
+  // En partidos de desacuerdo: ¿quién de las dos IAs más opuestas ganó?
+  let notaDesacuerdo: string | undefined;
+  if (prediccion.veredicto === 'desacuerdo') {
+    const validas = prediccion.respuestasIA.filter((r) => !r.error);
+    if (validas.length >= 2) {
+      const ordenadas = [...validas].sort(
+        (a, b) => b.probabilidad.local - a.probabilidad.local
+      );
+      const alta = ordenadas[0];
+      const baja = ordenadas[ordenadas.length - 1];
+      const ganador =
+        alta.probabilidad[resultadoReal] >= baja.probabilidad[resultadoReal]
+          ? alta
+          : baja;
+      const perdedor = ganador === alta ? baja : alta;
+      const pct = (x: number) => Math.round(x * 100);
+      notaDesacuerdo = `${ganador.ia} le dio ${pct(ganador.probabilidad[resultadoReal])}% al resultado real; ${perdedor.ia}, solo ${pct(perdedor.probabilidad[resultadoReal])}%.`;
+    }
+  }
+
+  return { golesLocal, golesVisitante, resultadoReal, actores, notaDesacuerdo };
 }

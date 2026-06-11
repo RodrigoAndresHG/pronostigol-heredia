@@ -5,6 +5,8 @@ import { partidoPorId } from '../../src/datos/partidos.js';
 import { calcularProbabilidadBase } from '../../src/lib/modeloBase.js';
 import { hechosDePartido } from '../../src/datos/dossiers.js';
 import { construirPrompt } from './prompt.js';
+import { leerResultado } from './resultados.js';
+import { construirAutopsia } from './calificacion.js';
 
 /**
  * Router puro de /api/predecir, sin conocimiento de HTTP framework.
@@ -72,9 +74,31 @@ async function manejarGet(req: EntradaApi): Promise<SalidaApi> {
         json: { error: 'Aún no hay predicción publicada para este partido.' },
       };
     }
+
+    // Si el partido ya se jugó, adjuntamos la "autopsia": cómo le fue a
+    // cada IA contra el resultado real. La predicción guardada es inmutable,
+    // así que esto prueba que el razonamiento no se editó a posteriori.
+    let autopsia = undefined;
+    try {
+      const resultado = await leerResultado(partidoId);
+      if (resultado) {
+        autopsia = construirAutopsia(
+          guardada.prediccion,
+          resultado.golesLocal,
+          resultado.golesVisitante
+        );
+      }
+    } catch {
+      /* sin resultado o sin tabla: la tarjeta no muestra autopsia */
+    }
+
     return {
       status: 200,
-      json: { ...guardada.prediccion, guardadaEn: guardada.generadaEn },
+      json: {
+        ...guardada.prediccion,
+        guardadaEn: guardada.generadaEn,
+        ...(autopsia ? { autopsia } : {}),
+      },
     };
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : 'Error interno';

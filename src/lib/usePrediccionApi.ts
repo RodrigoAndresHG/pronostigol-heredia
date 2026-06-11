@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { Prediccion } from '../tipos';
+import type { Autopsia, Prediccion } from '../tipos';
 
 /**
  * Hook que conversa con /api/predecir en el modelo "publicación".
@@ -17,7 +17,12 @@ import type { Prediccion } from '../tipos';
 export type EstadoApi =
   | { tipo: 'cargando' }
   | { tipo: 'sin-prediccion' }
-  | { tipo: 'ok'; prediccion: Prediccion; guardadaEn: string | null }
+  | {
+      tipo: 'ok';
+      prediccion: Prediccion;
+      guardadaEn: string | null;
+      autopsia: Autopsia | null;
+    }
   | { tipo: 'error'; mensaje: string };
 
 interface UsePrediccionApi {
@@ -31,6 +36,7 @@ interface UsePrediccionApi {
 interface RespuestaApi extends Prediccion {
   guardadaEn?: string | null;
   errorGuardado?: string | null;
+  autopsia?: Autopsia | null;
 }
 
 export function usePrediccionApi(
@@ -58,11 +64,17 @@ export function usePrediccionApi(
           throw new Error(cuerpo?.error || `HTTP ${res.status}`);
         }
         const data = (await res.json()) as RespuestaApi;
-        const { guardadaEn = null, errorGuardado: _e, ...prediccion } = data;
+        const {
+          guardadaEn = null,
+          errorGuardado: _e,
+          autopsia = null,
+          ...prediccion
+        } = data;
         setEstado({
           tipo: 'ok',
           prediccion: prediccion as Prediccion,
           guardadaEn,
+          autopsia: autopsia ?? null,
         });
       })
       .catch((err: Error) => {
@@ -93,7 +105,12 @@ export function usePrediccionApi(
         throw new Error(cuerpo?.error || `HTTP ${res.status}`);
       }
       const data = (await res.json()) as RespuestaApi;
-      const { guardadaEn = null, errorGuardado, ...prediccion } = data;
+      const {
+        guardadaEn = null,
+        errorGuardado,
+        autopsia = null,
+        ...prediccion
+      } = data;
       if (errorGuardado) {
         // Mostramos la predicción pero advertimos del error de guardado.
         console.warn('Predicción generada pero NO guardada:', errorGuardado);
@@ -102,6 +119,7 @@ export function usePrediccionApi(
         tipo: 'ok',
         prediccion: prediccion as Prediccion,
         guardadaEn,
+        autopsia: autopsia ?? null,
       });
     } catch (err) {
       const mensaje =
