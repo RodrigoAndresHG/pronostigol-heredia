@@ -10,7 +10,7 @@ export const WHATSAPP_CANAL =
   'https://whatsapp.com/channel/0029VbD3AGkLikg5aJbgRq0l';
 
 /**
- * LMS / workshop de la metodología HeredIA.
+ * LMS / plataforma de la metodología HeredIA.
  * ⚠️ CONFIRMA O AJUSTA esta URL — la puse desde tu dominio conocido.
  */
 export const LMS_URL = 'https://builder.rodriheredia.com';

@@ -202,7 +202,7 @@ function Inicio() {
       {/* ─── CIERRE: puente al método (LMS) ────────────────────────── */}
       <section className="border-t border-tinta-linea bg-tinta-tarjeta">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 py-20 sm:py-28">
-          <PuenteMetodo variante="banda" contenido="inicio-final" gancho="metodo" />
+          <PuenteMetodo variante="banda" contenido="metodologia" gancho="metodo" />
         </div>
       </section>
     </div>

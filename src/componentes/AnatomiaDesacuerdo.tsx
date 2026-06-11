@@ -4,7 +4,7 @@ import { lmsConSeguimiento } from '../marca/enlaces.ts';
 
 /**
  * "Anatomía del desacuerdo" — la transparencia operativa convertida en
- * lección de prompting (y en puente honesto al workshop).
+ * lección de prompting (y en puente honesto a la plataforma).
  *
  * Sólo aparece cuando hay DESACUERDO. Descompone POR QUÉ divergen las IAs:
  * cuánto movió cada una la probabilidad respecto al modelo base y sobre qué

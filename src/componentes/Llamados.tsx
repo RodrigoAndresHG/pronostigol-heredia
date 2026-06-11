@@ -6,7 +6,7 @@ import IconoWhatsApp from './IconoWhatsApp';
  *
  * Dos destinos:
  *   - CanalWhatsApp → suscripción al canal (audiencia recurrente de fútbol).
- *   - PuenteMetodo  → LMS / workshop (convierte al curioso del método).
+ *   - PuenteMetodo  → LMS / plataforma (convierte al curioso del método).
  *
  * Cada uno tiene dos variantes:
  *   - "banda": módulo completo con kicker + titular Fraunces + CTA.
@@ -106,7 +106,7 @@ export function PuenteMetodo({
           Aprende a aplicar este método con IA a tu negocio
         </span>
         <span className="font-mono text-[13px] text-cyan whitespace-nowrap group-hover:translate-x-0.5 transition-transform">
-          El workshop →
+          La plataforma →
         </span>
       </a>
     );
@@ -121,7 +121,7 @@ export function PuenteMetodo({
       <p className="mt-2 max-w-lectura text-[15px] text-tinta-cuerpo leading-relaxed">
         Comparar 3 IAs, medir su consenso y detectar dónde el mercado se
         equivoca es un proceso que puedes aplicar a tu negocio. Te enseño el
-        método completo en el workshop.
+        método completo en mi plataforma.
       </p>
       <a
         href={url}
@@ -129,7 +129,7 @@ export function PuenteMetodo({
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 mt-5 px-6 py-3 rounded-md border border-cyan/40 text-cyan font-semibold text-[15px] hover:bg-cyan/10 transition-colors"
       >
-        Conocer el workshop <span aria-hidden>→</span>
+        Conocer la plataforma <span aria-hidden>→</span>
       </a>
     </section>
   );

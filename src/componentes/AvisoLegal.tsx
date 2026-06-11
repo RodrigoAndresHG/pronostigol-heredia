@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { CanalWhatsApp, PuenteMetodo } from './Llamados';
 
 /**
- * Pie de página editorial. Captación global (WhatsApp + workshop) +
+ * Pie de página editorial. Captación global (WhatsApp + plataforma) +
  * aviso legal permanente + enlaces. Vive siempre visible para que
  * cualquier captura incluya el aviso.
  */
@@ -13,7 +13,7 @@ function AvisoLegal() {
         {/* Captación global — ambos destinos, compactos */}
         <div className="grid gap-3 sm:grid-cols-2 pb-10 mb-10 border-b border-tinta-linea">
           <CanalWhatsApp variante="linea" contexto="predicción" />
-          <PuenteMetodo variante="linea" contenido="footer" />
+          <PuenteMetodo variante="linea" contenido="prefooter" />
         </div>
 
         <div className="grid gap-8 sm:grid-cols-[2fr_1fr]">
