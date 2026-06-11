@@ -77,6 +77,35 @@ export function apiDevPlugin(): Plugin {
           return;
         }
 
+        // /api/historial → endpoint JSON (track-record real). Shim de
+        // VercelRequest/Response sobre el res de Node.
+        if (url.pathname === '/api/historial') {
+          try {
+            const query: Record<string, string> = {};
+            for (const [k, v] of url.searchParams.entries()) query[k] = v;
+            const vreq = { query, headers: req.headers, method: req.method ?? 'GET' };
+            const vres = {
+              setHeader: (k: string, v: string) => res.setHeader(k, v),
+              status(code: number) {
+                res.statusCode = code;
+                return this;
+              },
+              json(data: unknown) {
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify(data));
+                return this;
+              },
+            };
+            const mod = await server.ssrLoadModule('/api/historial.ts');
+            await mod.default(vreq, vres);
+          } catch (err) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+          }
+          return;
+        }
+
         // /api/meta sólo corre en producción (rewrite en vercel.json). En dev,
         // Vite sirve /partido/:id como SPA directamente.
         if (url.pathname === '/api/meta') {

@@ -157,6 +157,53 @@ export interface Prediccion {
   dossier?: HechosPartido;
 }
 
+// ─── Accountability (Fase 9): boletín, calibración, autopsia ─────────
+
+/** Quién razonó: cada IA, el consenso sintetizado, o el modelo base. */
+export type Actor = NombreIA | 'Consenso' | 'Modelo base';
+
+/** Fila del Boletín de Calibración: el track-record de un actor. */
+export interface BoletinActor {
+  actor: Actor;
+  /** Brier promedio sobre los partidos calificados. MENOR es mejor. */
+  brierPromedio: number;
+  aciertos: number;
+  total: number;
+  /** aciertos / total, 0..1. */
+  tasaAcierto: number;
+}
+
+/** Una cubeta de la curva de calibración de confianza. */
+export interface CubetaCalibracion {
+  /** Rango de confianza declarada, p. ej. "70-80". */
+  rango: string;
+  n: number;
+  /** Confianza declarada promedio en la cubeta, 0..100. */
+  confianzaPromedio: number;
+  /** Acierto real observado en la cubeta, 0..100. */
+  tasaAciertoReal: number;
+}
+
+/** Resumen calificado de un partido ya jugado (para el Historial). */
+export interface PartidoCalificado {
+  partidoId: string;
+  golesLocal: number;
+  golesVisitante: number;
+  resultadoReal: 'local' | 'empate' | 'visitante';
+  veredicto: Veredicto;
+  /** ¿El consenso de las IAs acertó el resultado? */
+  consensoAcerto: boolean;
+}
+
+/** Respuesta del endpoint /api/historial. */
+export interface HistorialResponse {
+  partidosCalificados: number;
+  /** Ordenado por Brier ascendente (el mejor primero). */
+  boletin: BoletinActor[];
+  calibracion: CubetaCalibracion[];
+  registros: PartidoCalificado[];
+}
+
 // ─── Historial ───────────────────────────────────────────────────────
 
 /**

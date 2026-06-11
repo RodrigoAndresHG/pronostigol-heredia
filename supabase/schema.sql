@@ -42,3 +42,31 @@ create policy "lectura_publica_predicciones"
 -- Con RLS habilitada y sin políticas para esas operaciones, las anon keys
 -- NO pueden escribir. Sólo el backend, usando la service_role key,
 -- puede insertar (la service_role bypasea RLS por diseño de Supabase).
+
+
+-- ─────────────────────────────────────────────────────────────────────
+-- Tabla `resultados` (Fase 9 · accountability)
+--
+-- Guarda el marcador final de cada partido jugado. A diferencia de
+-- `predicciones`, aquí hay UNA fila por partido (el resultado no cambia):
+-- por eso `partido_id` es UNIQUE y se usa UPSERT. Sobre esta tabla se
+-- calculan el Brier por IA, la curva de calibración y la autopsia.
+-- ─────────────────────────────────────────────────────────────────────
+
+create table if not exists resultados (
+  id              uuid        primary key default gen_random_uuid(),
+  partido_id      text        not null unique,
+  goles_local     int         not null,
+  goles_visitante int         not null,
+  resultado_real  text        not null,  -- 'local' | 'empate' | 'visitante'
+  registrado_en   timestamptz not null default now()
+);
+
+alter table resultados enable row level security;
+
+drop policy if exists "lectura_publica_resultados" on resultados;
+create policy "lectura_publica_resultados"
+  on resultados for select
+  using (true);
+-- Igual que `predicciones`: sin políticas de escritura; sólo la
+-- service_role (backend) puede insertar/actualizar.

@@ -17,7 +17,8 @@ import type { Prediccion } from '../../src/tipos/index.js';
 
 let clienteCache: SupabaseClient | null = null;
 
-function obtenerCliente(): SupabaseClient | null {
+/** Cliente de Supabase con service_role, cacheado. null si falta config. */
+export function obtenerCliente(): SupabaseClient | null {
   if (clienteCache) return clienteCache;
   // En el servidor leemos SUPABASE_URL o VITE_SUPABASE_URL (la misma URL,
   // el prefijo VITE_ es porque también la usa el frontend; aquí da igual).
@@ -92,6 +93,40 @@ export async function guardarPrediccion(
     throw new Error(`Error guardando predicción: ${error.message}`);
   }
   return { generadaEn: data.generada_en as string };
+}
+
+/**
+ * Devuelve la predicción MÁS RECIENTE de cada partido (una por partido_id).
+ * Se usa en el endpoint de historial para calcular el track-record sobre
+ * todos los partidos con predicción. Trae todas las filas ordenadas por
+ * fecha desc y se queda con la primera de cada partido.
+ */
+export async function leerUltimasDeTodos(): Promise<PrediccionGuardada[]> {
+  const cliente = obtenerCliente();
+  if (!cliente) return [];
+
+  const { data, error } = await cliente
+    .from('predicciones')
+    .select('partido_id, payload, generada_en')
+    .order('generada_en', { ascending: false });
+
+  if (error) {
+    console.error('Error leyendo predicciones:', error);
+    return [];
+  }
+
+  const vistos = new Set<string>();
+  const ultimas: PrediccionGuardada[] = [];
+  for (const fila of data ?? []) {
+    const pid = fila.partido_id as string;
+    if (vistos.has(pid)) continue;
+    vistos.add(pid);
+    ultimas.push({
+      prediccion: fila.payload as Prediccion,
+      generadaEn: fila.generada_en as string,
+    });
+  }
+  return ultimas;
 }
 
 /** True si las env vars de Supabase están todas configuradas. */
