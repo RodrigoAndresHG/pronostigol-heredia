@@ -10,6 +10,10 @@
     {
       "path": "/api/cron/generar-predicciones",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/cerrar-partidos",
+      "schedule": "0 9 * * *"
     }
   ]
 }
