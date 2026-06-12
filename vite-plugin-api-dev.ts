@@ -79,7 +79,11 @@ export function apiDevPlugin(): Plugin {
 
         // /api/historial y /api/goleadores → endpoints JSON. Shim de
         // VercelRequest/Response sobre el res de Node.
-        if (url.pathname === '/api/historial' || url.pathname === '/api/goleadores') {
+        if (
+          url.pathname === '/api/historial' ||
+          url.pathname === '/api/goleadores' ||
+          url.pathname === '/api/posiciones'
+        ) {
           try {
             const query: Record<string, string> = {};
             for (const [k, v] of url.searchParams.entries()) query[k] = v;

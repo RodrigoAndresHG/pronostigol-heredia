@@ -8,6 +8,7 @@ import ModalCaptura from './captacion/ModalCaptura';
 import Inicio from './paginas/Inicio';
 import Calendario from './paginas/Calendario';
 import DetallePartido from './paginas/DetallePartido';
+import Posiciones from './paginas/Posiciones';
 import Historial from './paginas/Historial';
 import Torneo from './paginas/Torneo';
 import Creditos from './paginas/Creditos';
@@ -41,6 +42,7 @@ function App() {
               <Route path="/" element={<Inicio />} />
               <Route path="/calendario" element={<Calendario />} />
               <Route path="/partido/:idPartido" element={<DetallePartido />} />
+              <Route path="/posiciones" element={<Posiciones />} />
               <Route path="/historial" element={<Historial />} />
               <Route path="/torneo" element={<Torneo />} />
               <Route path="/creditos" element={<Creditos />} />
