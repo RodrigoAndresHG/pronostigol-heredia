@@ -391,6 +391,7 @@ function PrediccionPublicada({
           idPartido={idPartido}
           titulo={tituloCompartir}
           veredicto={prediccion.veredicto}
+          version={guardadaEn}
         />
       </section>
 

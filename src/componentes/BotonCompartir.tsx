@@ -16,17 +16,30 @@ import type { Veredicto } from '../tipos';
  *   - Ignora AbortError (el usuario canceló, no es un fallo).
  */
 
+/**
+ * Súbelo si cambia el DISEÑO de la imagen compartible. Forma parte del
+ * "rompe-caché" de la URL para que WhatsApp/redes traigan la vista previa
+ * nueva en vez de la cacheada.
+ */
+const VERSION_IMAGEN = '2';
+
 interface Props {
   idPartido: string;
   /** Texto del título/descr. al compartir (ej. "México vs Sudáfrica"). */
   titulo: string;
   /** Si es 'desacuerdo', se comparte la imagen vertical "Choque de IAs". */
   veredicto?: Veredicto;
+  /**
+   * Timestamp de la predicción (guardadaEn). Junto con VERSION_IMAGEN forma
+   * un sufijo `?v=` en la URL compartida: cuando la predicción se regenera o
+   * cambia el diseño, la URL cambia y WhatsApp deja de mostrar la cacheada.
+   */
+  version?: string | null;
 }
 
 type Estado = 'idle' | 'copiado' | 'descargado' | 'error';
 
-function BotonCompartir({ idPartido, titulo, veredicto }: Props) {
+function BotonCompartir({ idPartido, titulo, veredicto, version }: Props) {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [estado, setEstado] = useState<Estado>('idle');
 
@@ -34,10 +47,17 @@ function BotonCompartir({ idPartido, titulo, veredicto }: Props) {
   // formato nativo de Stories/Reels/TikTok y el momento más viral.
   const esChoque = veredicto === 'desacuerdo';
   const urlImagen = `/api/og-imagen?partidoId=${encodeURIComponent(idPartido)}${esChoque ? '&formato=vertical' : ''}`;
-  const urlCompartir =
+
+  // Rompe-caché del preview: cambia al regenerar la predicción o el diseño.
+  const ts = version && !Number.isNaN(new Date(version).getTime())
+    ? new Date(version).getTime()
+    : 0;
+  const bust = `${ts}-${VERSION_IMAGEN}`;
+  const base =
     typeof window !== 'undefined'
       ? `${window.location.origin}/partido/${idPartido}`
       : `https://pronostigol.rodriheredia.com/partido/${idPartido}`;
+  const urlCompartir = `${base}?v=${bust}`;
   const texto = esChoque
     ? `${titulo} — Las 3 IAs NO se ponen de acuerdo · PronostiGol HeredIA`
     : `${titulo} — Predicción de 3 IAs · PronostiGol HeredIA`;
