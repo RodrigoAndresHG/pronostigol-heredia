@@ -69,6 +69,32 @@ function corta(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1).trimEnd() + '…' : s;
 }
 
+/**
+ * Marcador de consenso: la moda del `marcadorEsperado` entre las IAs que
+ * respondieron (desempate por mayor confianza acumulada). Está en formato
+ * "goles del local primero", consistente con el orden LOCAL vs VISITANTE.
+ * Devuelve null si ninguna IA propuso marcador.
+ */
+function marcadorConsenso(respuestas: RespuestaIA[]): string | null {
+  const validos = respuestas.filter((r) => !r.error && r.marcadorEsperado);
+  if (validos.length === 0) return null;
+  const conteo = new Map<string, { n: number; conf: number }>();
+  for (const r of validos) {
+    const k = r.marcadorEsperado as string;
+    const a = conteo.get(k) ?? { n: 0, conf: 0 };
+    a.n += 1;
+    a.conf += r.confianza;
+    conteo.set(k, a);
+  }
+  let mejor: { marcador: string; n: number; conf: number } | null = null;
+  for (const [marcador, { n, conf }] of conteo) {
+    if (!mejor || n > mejor.n || (n === mejor.n && conf > mejor.conf)) {
+      mejor = { marcador, n, conf };
+    }
+  }
+  return mejor?.marcador ?? null;
+}
+
 /** El resultado dominante de una distribución, con su etiqueta y color. */
 function dominante(
   d: DistribucionResultado,
@@ -268,6 +294,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           : { pct: pe, etiqueta: 'EMPATE', color: C.mute };
     const esConsenso = pred.veredicto === 'consenso';
     const colorVer = esConsenso ? C.verde : C.cyan;
+    const marcador = marcadorConsenso(pred.respuestasIA);
 
     bloqueDatos = caja(
       { flexDirection: 'column' },
@@ -297,7 +324,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           txt(
             { fontFamily: 'JetBrains Mono', fontSize: 20, letterSpacing: 2, color: C.mute, marginTop: 8 },
             dom.etiqueta
-          )
+          ),
+          marcador
+            ? txt(
+                {
+                  fontFamily: 'JetBrains Mono',
+                  fontWeight: 600,
+                  fontSize: 26,
+                  letterSpacing: 1,
+                  color: C.titulo,
+                  marginTop: 16,
+                },
+                `MARCADOR ~ ${marcador}`
+              )
+            : null
         ),
         caja(
           { flexDirection: 'column', flexGrow: 1, minWidth: 0, paddingBottom: 8 },
