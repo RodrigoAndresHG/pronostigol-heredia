@@ -4,8 +4,9 @@ import { PARTIDOS } from '../datos/partidos';
 import { EQUIPOS } from '../datos/equipos';
 import { LETRAS_GRUPOS } from '../datos/grupos';
 import { claveDiaLocal, fechaCompleta, zonaDelUsuario } from '../lib/zonaHoraria';
-import TarjetaPartido from '../componentes/TarjetaPartido';
 import { CanalWhatsApp } from '../componentes/Llamados';
+import TarjetaJugable from '../juego/TarjetaJugable';
+import { usePredicciones } from '../juego/usePredicciones';
 
 /**
  * Calendario editorial. Filtros como chips (equipo + grupo), partidos
@@ -17,6 +18,7 @@ function Calendario() {
   const [resultadosPorId, setResultadosPorId] = useState<Map<string, PartidoCalificado>>(
     () => new Map()
   );
+  const consensos = usePredicciones();
 
   // Trae los resultados ya jugados para marcar los partidos finalizados.
   useEffect(() => {
@@ -157,10 +159,11 @@ function Calendario() {
               </div>
               <div className="mt-2 divide-y divide-tinta-linea">
                 {partidos.map((partido) => (
-                  <TarjetaPartido
+                  <TarjetaJugable
                     key={partido.id}
                     partido={partido}
                     resultado={resultadosPorId.get(partido.id)}
+                    consenso={consensos.get(partido.id)}
                   />
                 ))}
               </div>

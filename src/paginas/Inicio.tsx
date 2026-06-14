@@ -4,7 +4,8 @@ import type { PartidoCalificado } from '../tipos';
 import { PARTIDOS } from '../datos/partidos.js';
 import { equipoPorId } from '../datos/equipos.js';
 import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.js';
-import TarjetaPartido from '../componentes/TarjetaPartido';
+import TarjetaJugable from '../juego/TarjetaJugable';
+import { usePredicciones } from '../juego/usePredicciones';
 import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
 import CapaParticulas from '../componentes/visual/CapaParticulas';
 import { CanalWhatsApp, PuenteMetodo } from '../componentes/Llamados';
@@ -39,6 +40,7 @@ function Inicio() {
   const [resultadosPorId, setResultadosPorId] = useState<Map<string, PartidoCalificado>>(
     () => new Map()
   );
+  const consensos = usePredicciones();
   useEffect(() => {
     let cancelado = false;
     fetch('/api/historial')
@@ -218,11 +220,12 @@ function Inicio() {
         </div>
         <div className="mt-4 divide-y divide-tinta-linea">
           {proximos.map((partido) => (
-            <TarjetaPartido
+            <TarjetaJugable
               key={partido.id}
               partido={partido}
               mostrarFecha
               resultado={resultadosPorId.get(partido.id)}
+              consenso={consensos.get(partido.id)}
             />
           ))}
         </div>

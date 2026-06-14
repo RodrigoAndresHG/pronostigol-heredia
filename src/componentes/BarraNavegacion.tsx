@@ -8,16 +8,16 @@ import ToggleSonido from './ToggleSonido';
  * Marca a la izquierda (wordmark serif), enlaces a la derecha.
  *
  * Responsive:
- *   - Pantallas grandes (sm+): enlaces inline en mono.
- *   - Móvil: el wordmark + toggle + botón hamburguesa. Los enlaces
- *     viven en un panel desplegable (no caben inline: wordmark 194px +
- *     4 enlaces 350px + toggle excedían el ancho de un móvil de 375px y
- *     desbordaban la página entera de lado).
+ *   - Pantallas grandes (lg+): los 6 enlaces inline en mono.
+ *   - Móvil/tablet (<lg): wordmark + toggle + botón hamburguesa. Los enlaces
+ *     viven en un panel desplegable. Con 6 enlaces ya no caben inline antes
+ *     de ~1024px (a 768px desbordaban), por eso el umbral es lg.
  */
 
 const ENLACES = [
   { ruta: '/', etiqueta: 'Inicio' },
   { ruta: '/calendario', etiqueta: 'Calendario' },
+  { ruta: '/mi-ranking', etiqueta: 'Mi Ranking' },
   { ruta: '/posiciones', etiqueta: 'Posiciones' },
   { ruta: '/historial', etiqueta: 'Historial' },
   { ruta: '/torneo', etiqueta: 'Torneo' },
@@ -47,8 +47,8 @@ function BarraNavegacion() {
           </span>
         </NavLink>
 
-        {/* ─── Enlaces inline (solo md+; 5 enlaces no caben antes) ── */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* ─── Enlaces inline (solo lg+; 6 enlaces no caben antes) ── */}
+        <div className="hidden lg:flex items-center gap-2">
           <nav>
             <ul className="flex gap-1 font-mono text-[13px]">
               {ENLACES.map((enlace) => (
@@ -75,7 +75,7 @@ function BarraNavegacion() {
         </div>
 
         {/* ─── Controles móviles (toggle + hamburguesa) ───────────── */}
-        <div className="flex md:hidden items-center gap-1 shrink-0">
+        <div className="flex lg:hidden items-center gap-1 shrink-0">
           <ToggleSonido />
           <button
             onClick={() => setMenuAbierto((v) => !v)}
@@ -107,7 +107,7 @@ function BarraNavegacion() {
         {menuAbierto && (
           <motion.nav
             id="menu-movil"
-            className="md:hidden border-t border-tinta-linea bg-tinta-fondo/95 backdrop-blur-md overflow-hidden"
+            className="lg:hidden border-t border-tinta-linea bg-tinta-fondo/95 backdrop-blur-md overflow-hidden"
             initial={reducir ? { opacity: 0 } : { height: 0, opacity: 0 }}
             animate={reducir ? { opacity: 1 } : { height: 'auto', opacity: 1 }}
             exit={reducir ? { opacity: 0 } : { height: 0, opacity: 0 }}

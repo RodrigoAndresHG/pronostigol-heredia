@@ -12,6 +12,8 @@ import Posiciones from './paginas/Posiciones';
 import Historial from './paginas/Historial';
 import Torneo from './paginas/Torneo';
 import Creditos from './paginas/Creditos';
+import MiRanking from './juego/MiRanking';
+import PanelRegistro from './juego/PanelRegistro';
 
 /**
  * Componente raíz.
@@ -43,6 +45,7 @@ function App() {
               <Route path="/calendario" element={<Calendario />} />
               <Route path="/partido/:idPartido" element={<DetallePartido />} />
               <Route path="/posiciones" element={<Posiciones />} />
+              <Route path="/mi-ranking" element={<MiRanking />} />
               <Route path="/historial" element={<Historial />} />
               <Route path="/torneo" element={<Torneo />} />
               <Route path="/creditos" element={<Creditos />} />
@@ -56,6 +59,9 @@ function App() {
       {/* Captación de audiencia (Mundial 2026) — componentes aislados */}
       <BarraCaptura />
       <ModalCaptura />
+
+      {/* Juego "Compite contra las IAs" — panel de registro global (aislado) */}
+      <PanelRegistro />
       <Analytics />
     </div>
   );
