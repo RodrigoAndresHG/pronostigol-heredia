@@ -1,4 +1,6 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { PartidoCalificado } from '../tipos';
 import { PARTIDOS } from '../datos/partidos.js';
 import { equipoPorId } from '../datos/equipos.js';
 import { estadioPorSede, rutaImagenEstadio } from '../datos/estadios.js';
@@ -7,7 +9,7 @@ import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
 import CapaParticulas from '../componentes/visual/CapaParticulas';
 import { CanalWhatsApp, PuenteMetodo } from '../componentes/Llamados';
 import Reveal from '../movimiento/Reveal';
-import { fechaCompleta, horaLocal } from '../lib/zonaHoraria';
+import { claveDiaLocal, fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 
 /**
  * Inicio editorial.
@@ -23,7 +25,34 @@ function Inicio() {
   const local = equipoPorId(inaugural.equipoLocalId);
   const visitante = equipoPorId(inaugural.equipoVisitanteId);
   const estadio = estadioPorSede(inaugural.sede);
-  const proximos = PARTIDOS.slice(0, 6);
+
+  // "Próximos partidos" acorde al día: desde hoy hacia adelante. Incluye los
+  // de hoy ya jugados (que muestran su marcador y el sello IA). Si el torneo
+  // ya terminó, cae a los últimos 6.
+  const proximos = useMemo(() => {
+    const hoy = claveDiaLocal(new Date().toISOString());
+    const desdeHoy = PARTIDOS.filter((p) => claveDiaLocal(p.fechaISO) >= hoy);
+    return (desdeHoy.length ? desdeHoy : PARTIDOS.slice(-6)).slice(0, 6);
+  }, []);
+
+  // Resultados ya jugados, para el sello IA ✓/✗ en los partidos finalizados.
+  const [resultadosPorId, setResultadosPorId] = useState<Map<string, PartidoCalificado>>(
+    () => new Map()
+  );
+  useEffect(() => {
+    let cancelado = false;
+    fetch('/api/historial')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { registros?: PartidoCalificado[] } | null) => {
+        if (!cancelado && d?.registros) {
+          setResultadosPorId(new Map(d.registros.map((r) => [r.partidoId, r])));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   return (
     <div>
@@ -189,7 +218,12 @@ function Inicio() {
         </div>
         <div className="mt-4 divide-y divide-tinta-linea">
           {proximos.map((partido) => (
-            <TarjetaPartido key={partido.id} partido={partido} mostrarFecha />
+            <TarjetaPartido
+              key={partido.id}
+              partido={partido}
+              mostrarFecha
+              resultado={resultadosPorId.get(partido.id)}
+            />
           ))}
         </div>
 
