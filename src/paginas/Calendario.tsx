@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { PartidoCalificado } from '../tipos';
 import { PARTIDOS } from '../datos/partidos';
 import { EQUIPOS } from '../datos/equipos';
 import { LETRAS_GRUPOS } from '../datos/grupos';
@@ -13,6 +14,25 @@ import { CanalWhatsApp } from '../componentes/Llamados';
 function Calendario() {
   const [filtroEquipo, setFiltroEquipo] = useState<string>('');
   const [filtroGrupo, setFiltroGrupo] = useState<string>('');
+  const [resultadosPorId, setResultadosPorId] = useState<Map<string, PartidoCalificado>>(
+    () => new Map()
+  );
+
+  // Trae los resultados ya jugados para marcar los partidos finalizados.
+  useEffect(() => {
+    let cancelado = false;
+    fetch('/api/historial')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { registros?: PartidoCalificado[] } | null) => {
+        if (!cancelado && d?.registros) {
+          setResultadosPorId(new Map(d.registros.map((r) => [r.partidoId, r])));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, []);
 
   const equiposOrdenados = useMemo(
     () => [...EQUIPOS].sort((a, b) => a.nombre.localeCompare(b.nombre)),
@@ -44,6 +64,24 @@ function Calendario() {
   }, [partidosFiltrados]);
 
   const hayFiltro = filtroEquipo || filtroGrupo;
+
+  // Al abrir, saltar al día de hoy (o al próximo con partidos). Solo una vez,
+  // y solo si no hay filtros activos.
+  const yaScrolleado = useRef(false);
+  useEffect(() => {
+    if (yaScrolleado.current || hayFiltro) return;
+    const claves = [...partidosPorDia.keys()];
+    if (claves.length === 0) return;
+    const hoy = claveDiaLocal(new Date().toISOString());
+    const objetivo = claves.includes(hoy)
+      ? hoy
+      : (claves.find((c) => c >= hoy) ?? claves[claves.length - 1]);
+    const raf = requestAnimationFrame(() => {
+      document.getElementById(`dia-${objetivo}`)?.scrollIntoView({ block: 'start' });
+      yaScrolleado.current = true;
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [partidosPorDia, hayFiltro]);
 
   return (
     <div className="max-w-6xl mx-auto px-5 sm:px-8 pt-24 pb-12">
@@ -108,7 +146,7 @@ function Calendario() {
       ) : (
         <div className="mt-12 space-y-10">
           {[...partidosPorDia.entries()].map(([clave, partidos]) => (
-            <section key={clave}>
+            <section key={clave} id={`dia-${clave}`} className="scroll-mt-20">
               <div className="sticky top-16 z-10 bg-tinta-fondo/90 backdrop-blur-sm py-3 -mx-1 px-1 border-b border-tinta-linea flex items-baseline justify-between">
                 <h2 className="font-display text-xl sm:text-2xl font-semibold text-tinta-titulo">
                   {fechaCompleta(partidos[0].fechaISO)}
@@ -119,7 +157,11 @@ function Calendario() {
               </div>
               <div className="mt-2 divide-y divide-tinta-linea">
                 {partidos.map((partido) => (
-                  <TarjetaPartido key={partido.id} partido={partido} />
+                  <TarjetaPartido
+                    key={partido.id}
+                    partido={partido}
+                    resultado={resultadosPorId.get(partido.id)}
+                  />
                 ))}
               </div>
             </section>

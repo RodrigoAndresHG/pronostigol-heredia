@@ -15,15 +15,28 @@ const CODIGO_PAIS: Record<Partido['paisAnfitrion'], string> = {
   Canadá: 'CAN',
 };
 
+/** Resultado de un partido ya jugado (para marcarlo en el calendario). */
+export interface ResultadoTarjeta {
+  golesLocal: number;
+  golesVisitante: number;
+  /** ¿El consenso de las IAs acertó? Para el sello ✓/✗ de marca. */
+  consensoAcerto: boolean;
+}
+
 interface Props {
   partido: Partido;
   /** Si true muestra la fecha corta además de la hora (para inicio). */
   mostrarFecha?: boolean;
+  /** Si está presente, el partido ya se jugó: se muestra el marcador. */
+  resultado?: ResultadoTarjeta;
 }
 
-function TarjetaPartido({ partido, mostrarFecha = false }: Props) {
+function TarjetaPartido({ partido, mostrarFecha = false, resultado }: Props) {
   const local = equipoPorId(partido.equipoLocalId);
   const visitante = equipoPorId(partido.equipoVisitanteId);
+  const finalizado = !!resultado;
+  const ganaLocal = finalizado && resultado!.golesLocal > resultado!.golesVisitante;
+  const ganaVisitante = finalizado && resultado!.golesVisitante > resultado!.golesLocal;
 
   return (
     <Link
@@ -31,15 +44,31 @@ function TarjetaPartido({ partido, mostrarFecha = false }: Props) {
       className="group block border-l-2 border-transparent hover:border-verde bg-tinta-tarjeta hover:bg-tinta-elevado transition-all duration-200 ease-editorial rounded-r-lg"
     >
       <div className="px-4 sm:px-5 py-4 flex items-center gap-4">
-        {/* Hora / fecha en mono */}
+        {/* Hora / fecha — o FINAL + sello IA si ya se jugó */}
         <div className="shrink-0 w-16 text-center">
-          <p className="font-mono text-sm text-tinta-titulo font-semibold tabular">
-            {horaLocal(partido.fechaISO)}
-          </p>
-          {mostrarFecha && (
-            <p className="font-mono text-[10px] text-tinta-mute uppercase mt-0.5">
-              {fechaCorta(partido.fechaISO)}
-            </p>
+          {finalizado ? (
+            <>
+              <p className="font-mono text-[11px] text-tinta-mute uppercase tracking-wide">
+                Final
+              </p>
+              <span
+                className={`inline-block mt-1 font-mono text-[11px] font-semibold ${resultado!.consensoAcerto ? 'text-verde' : 'text-peligro'}`}
+                title={resultado!.consensoAcerto ? 'Las IAs acertaron' : 'Las IAs fallaron'}
+              >
+                IA {resultado!.consensoAcerto ? '✓' : '✗'}
+              </span>
+            </>
+          ) : (
+            <>
+              <p className="font-mono text-sm text-tinta-titulo font-semibold tabular">
+                {horaLocal(partido.fechaISO)}
+              </p>
+              {mostrarFecha && (
+                <p className="font-mono text-[10px] text-tinta-mute uppercase mt-0.5">
+                  {fechaCorta(partido.fechaISO)}
+                </p>
+              )}
+            </>
           )}
         </div>
 
@@ -52,17 +81,27 @@ function TarjetaPartido({ partido, mostrarFecha = false }: Props) {
             <span className="text-tinta-titulo font-semibold text-[15px] w-10">
               {local.id}
             </span>
-            <span className="text-tinta-cuerpo text-sm truncate flex-1">
+            <span className={`text-sm truncate flex-1 ${finalizado && !ganaLocal ? 'text-tinta-mute' : 'text-tinta-cuerpo'}`}>
               {local.nombre}
             </span>
+            {finalizado && (
+              <span className={`tabular text-[15px] w-5 text-right ${ganaLocal ? 'text-tinta-titulo font-bold' : 'text-tinta-mute'}`}>
+                {resultado!.golesLocal}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2.5 font-mono mt-1.5">
             <span className="text-tinta-titulo font-semibold text-[15px] w-10">
               {visitante.id}
             </span>
-            <span className="text-tinta-cuerpo text-sm truncate flex-1">
+            <span className={`text-sm truncate flex-1 ${finalizado && !ganaVisitante ? 'text-tinta-mute' : 'text-tinta-cuerpo'}`}>
               {visitante.nombre}
             </span>
+            {finalizado && (
+              <span className={`tabular text-[15px] w-5 text-right ${ganaVisitante ? 'text-tinta-titulo font-bold' : 'text-tinta-mute'}`}>
+                {resultado!.golesVisitante}
+              </span>
+            )}
           </div>
         </div>
 
