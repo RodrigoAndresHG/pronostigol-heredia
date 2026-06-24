@@ -6,6 +6,7 @@ import {
   guardarPrediccion,
   supabaseConfigurado,
 } from '../_lib/almacen.js';
+import { leerTodosLosResultados } from '../_lib/resultados.js';
 
 /**
  * Cron diario: genera predicciones para los partidos próximos.
@@ -85,10 +86,15 @@ export default async function handler(
     }
   }
 
-  // 3. Generar todas en paralelo.
+  // 3. Leer los resultados del torneo UNA sola vez y compartirlos con todas
+  //    las predicciones. Cada predecir() los usa para el contexto intra-torneo;
+  //    pasarlos evita N lecturas idénticas de Supabase dentro del mismo cron.
+  const resultadosTorneo = await leerTodosLosResultados();
+
+  // 4. Generar todas en paralelo.
   const resultados = await Promise.allSettled(
     aGenerar.map(async (partido) => {
-      const prediccion = await predecir(partido.id);
+      const prediccion = await predecir(partido.id, resultadosTorneo);
       await guardarPrediccion(partido.id, prediccion);
       return partido.id;
     })
