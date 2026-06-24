@@ -3,6 +3,8 @@ import { partidoPorId } from '../../src/datos/partidos.js';
 import { calcularProbabilidadBase } from '../../src/lib/modeloBase.js';
 import { hechosDePartido } from '../../src/datos/dossiers.js';
 import { construirPrompt } from './prompt.js';
+import { construirContextoTorneo } from './contextoTorneo.js';
+import { leerTodosLosResultados, type ResultadoPartido } from './resultados.js';
 import { consultarClaude } from './iaClaude.js';
 import { consultarGPT } from './iaGPT.js';
 import { consultarGemini } from './iaGemini.js';
@@ -24,7 +26,10 @@ import { sintetizar } from './sintesis.js';
  *     las otras igual responden. Si todas fallan, la síntesis lo dice.
  */
 
-export async function predecir(partidoId: string): Promise<Prediccion> {
+export async function predecir(
+  partidoId: string,
+  resultadosTorneo?: ResultadoPartido[]
+): Promise<Prediccion> {
   const partido = partidoPorId(partidoId);
   if (!partido) {
     throw new Error(`Partido no encontrado: ${partidoId}`);
@@ -37,12 +42,19 @@ export async function predecir(partidoId: string): Promise<Prediccion> {
   // Capa 1.5 — dossier de hechos verificados que ancla a las IAs.
   const dossier = hechosDePartido(partido);
 
+  // Capa 1.6 — forma intra-torneo: resultados ya jugados + tabla del grupo.
+  // En producción se leen de Supabase; los tests inyectan resultados a mano
+  // para mantener `predecir` determinista. Si no hay Supabase, sale [].
+  const resultados = resultadosTorneo ?? (await leerTodosLosResultados());
+  const contexto = construirContextoTorneo(partido, resultados);
+
   // Capa 2 — las 3 IAs en paralelo, con el MISMO prompt anclado a hechos.
   const { sistema, usuario } = construirPrompt(
     partido,
     probabilidadBase,
     desglose,
-    dossier
+    dossier,
+    contexto
   );
   const [claude, gpt, gemini] = await Promise.all([
     consultarClaude(sistema, usuario),

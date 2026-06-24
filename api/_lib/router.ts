@@ -5,7 +5,8 @@ import { partidoPorId } from '../../src/datos/partidos.js';
 import { calcularProbabilidadBase } from '../../src/lib/modeloBase.js';
 import { hechosDePartido } from '../../src/datos/dossiers.js';
 import { construirPrompt } from './prompt.js';
-import { leerResultado } from './resultados.js';
+import { construirContextoTorneo } from './contextoTorneo.js';
+import { leerResultado, leerTodosLosResultados } from './resultados.js';
 import { construirAutopsia } from './calificacion.js';
 
 /**
@@ -47,9 +48,13 @@ async function manejarGet(req: EntradaApi): Promise<SalidaApi> {
     return { status: 400, json: { error: 'Falta partidoId en la query.' } };
   }
 
-  // ?soloPrompt=1 → devuelve el prompt EXACTO (anclado a hechos) sin llamar
-  // a las IAs ni a Supabase. Alimenta el botón "Copiar este caso como prompt"
-  // de la Anatomía del Desacuerdo: transparencia operativa total.
+  // ?soloPrompt=1 → reconstruye el prompt SIN llamar a las IAs (no gasta tokens).
+  // Sí lee Supabase, pero sólo para el bloque de RESULTADOS DEL TORNEO ya
+  // jugados. Ese bloque refleja los marcadores ANTERIORES al kickoff de este
+  // partido AL DÍA DE HOY (regla anti-leakage por fecha), que no es
+  // necesariamente el instante exacto en que se generó la predicción guardada.
+  // Alimenta el botón "Copiar este caso como prompt" de la Anatomía del
+  // Desacuerdo: transparencia del razonamiento.
   if (req.query?.soloPrompt) {
     const partido = partidoPorId(partidoId);
     if (!partido) {
@@ -57,11 +62,16 @@ async function manejarGet(req: EntradaApi): Promise<SalidaApi> {
     }
     const { probabilidad, desglose } = calcularProbabilidadBase(partido);
     const dossier = hechosDePartido(partido);
+    const contexto = construirContextoTorneo(
+      partido,
+      await leerTodosLosResultados()
+    );
     const { sistema, usuario } = construirPrompt(
       partido,
       probabilidad,
       desglose,
-      dossier
+      dossier,
+      contexto
     );
     return { status: 200, json: { sistema, usuario } };
   }

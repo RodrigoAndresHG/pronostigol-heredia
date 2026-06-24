@@ -5,6 +5,10 @@ import type {
 } from '../../src/tipos/index.js';
 import type { DesgloseModelo } from '../../src/lib/modeloBase.js';
 import { equipoPorId } from '../../src/datos/equipos.js';
+import type {
+  ContextoTorneo,
+  RecordEquipo,
+} from './contextoTorneo.js';
 
 /**
  * Construye el prompt que reciben las 3 IAs.
@@ -27,6 +31,7 @@ import { equipoPorId } from '../../src/datos/equipos.js';
  *   - La sede y país anfitrión.
  *   - La probabilidad base (Capa 1) y su desglose.
  *   - Los HECHOS VERIFICADOS del partido (si los hay) o la regla "sin hechos".
+ *   - Los RESULTADOS DEL TORNEO hasta la fecha (forma intra-torneo), si los hay.
  *   - Instrucciones estrictas de formato JSON.
  */
 
@@ -34,7 +39,8 @@ export function construirPrompt(
   partido: Partido,
   probabilidadBase: DistribucionResultado,
   desglose: DesgloseModelo,
-  hechos: HechosPartido | null
+  hechos: HechosPartido | null,
+  contexto: ContextoTorneo | null = null
 ): { sistema: string; usuario: string } {
   const local = equipoPorId(partido.equipoLocalId);
   const visitante = equipoPorId(partido.equipoVisitanteId);
@@ -49,9 +55,10 @@ REGLAS ESTRICTAS:
 - "marcadorEsperado" es opcional, formato "X-Y" con goles del local primero.
 
 ANCLAJE A HECHOS (regla dura, no negociable):
-- Razona SÓLO con los HECHOS VERIFICADOS que se te entregan y con el modelo base. Tu memoria de entrenamiento puede estar desactualizada.
-- PROHIBIDO afirmar datos específicos que no estén en los hechos: nombres de entrenadores, jugadores, lesiones, resultados o estadísticas concretas. Si lo haces, fallas la tarea.
-- Si necesitas un dato que no está en los hechos, NO lo inventes: razona en términos generales (nivel, estilo, confederación) o di explícitamente que no lo sabes y baja la confianza.
+- Razona SÓLO con lo que se te entrega: los HECHOS VERIFICADOS, los RESULTADOS DEL TORNEO hasta la fecha (si aparecen) y el modelo base. Tu memoria de entrenamiento puede estar desactualizada.
+- Los RESULTADOS DEL TORNEO que se incluyen abajo SÍ son fuente válida y verificada: úsalos para leer la forma actual de cada equipo. Cualquier otro resultado o estadística que no esté escrito ahí, NO lo afirmes.
+- PROHIBIDO inventar datos específicos fuera de lo entregado: nombres de entrenadores, jugadores, lesiones, marcadores o estadísticas concretas. Si lo haces, fallas la tarea.
+- Si necesitas un dato que no está, NO lo inventes: razona en términos generales (nivel, estilo, confederación) o di explícitamente que no lo sabes y baja la confianza.
 
 Formato exacto de respuesta:
 {
@@ -83,8 +90,8 @@ Factores que produjeron esa base:
 - Ventaja de sede del local: +${desglose.bonusSedeLocal} Elo${desglose.bonusSedeLocal === 120 ? ' (anfitrión en su país)' : ''}
 
 ${bloqueHechos(local.nombre, visitante.nombre, hechos)}
-
-Tu trabajo: ajusta la base apoyándote ÚNICAMENTE en estos hechos y el modelo base, y devuelve TU propia probabilidad.`;
+${bloqueContextoTorneo(contexto)}
+Tu trabajo: ajusta la base apoyándote ÚNICAMENTE en estos hechos, los resultados del torneo y el modelo base, y devuelve TU propia probabilidad.`;
 
   return { sistema, usuario };
 }
@@ -121,4 +128,56 @@ function lineaEquipo(d: {
   if (d.formaReciente) partes.push(`Forma: ${limpio(d.formaReciente)}`);
   if (d.notaTorneo) partes.push(limpio(d.notaTorneo));
   return partes.join('. ') + '.';
+}
+
+/**
+ * Serializa el contexto intra-torneo (resultados ya jugados + tabla del
+ * grupo). Devuelve '' cuando no hay nada (MD1), o el bloque envuelto en
+ * saltos de línea para separarlo visualmente del resto del prompt.
+ */
+function bloqueContextoTorneo(contexto: ContextoTorneo | null): string {
+  if (!contexto) return '';
+
+  const lineas = [
+    'RESULTADOS DEL TORNEO HASTA AHORA (hechos verificados — esta SÍ es fuente válida, léela como forma actual):',
+    lineasEquipoTorneo(contexto.local),
+    lineasEquipoTorneo(contexto.visitante),
+  ];
+
+  if (contexto.tabla && contexto.tabla.length > 0) {
+    const filas = contexto.tabla
+      .map((f, i) => {
+        const dif = f.dif >= 0 ? `+${f.dif}` : `${f.dif}`;
+        return `  ${i + 1}. ${f.nombre} — ${f.pts} pts (${f.pj} PJ, dif ${dif})`;
+      })
+      .join('\n');
+    lineas.push(
+      `Tabla del Grupo ${contexto.grupo} antes de este partido (orden aprox. por pts y dif. de gol):\n${filas}`
+    );
+  }
+
+  return '\n' + lineas.join('\n') + '\n';
+}
+
+/** Una o varias líneas con el récord de un equipo y sus partidos jugados. */
+function lineasEquipoTorneo(r: RecordEquipo): string {
+  if (r.pj === 0) {
+    return `${r.nombre}: aún sin partidos jugados en el torneo.`;
+  }
+  const cabecera = `${r.nombre} — ${r.pj} PJ: ${r.g}G ${r.e}E ${r.p}P, ${r.gf}:${r.gc}, ${r.pts} pts:`;
+  const detalle = r.partidos
+    .map((p) => {
+      const verbo =
+        p.resultado === 'G' ? 'venció' : p.resultado === 'E' ? 'empató' : 'perdió';
+      const nexo = p.resultado === 'G' ? 'a' : 'con';
+      // "de local/visita" es la condición NOMINAL del fixture, no localía real:
+      // sólo orienta la lectura del marcador (goles a favor primero). En fase de
+      // grupos es fiel; si en el futuro se cargan partidos de eliminación directa
+      // (sede neutral), conviene matizar esta etiqueta para no sugerir ventaja
+      // de campo inexistente. La sede real y el bonus de localía ya van aparte.
+      const condicion = p.esLocal ? 'de local' : 'de visita';
+      return `  · MD${p.matchday}: ${verbo} ${p.golesAFavor}-${p.golesEnContra} ${nexo} ${p.rivalNombre} (${condicion})`;
+    })
+    .join('\n');
+  return `${cabecera}\n${detalle}`;
 }
