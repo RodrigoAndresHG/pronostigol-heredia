@@ -122,13 +122,14 @@ export function apiDevPlugin(): Plugin {
           return;
         }
 
-        // /api/historial, /api/goleadores, /api/posiciones, /api/predicciones →
-        // endpoints JSON de lectura. Shim de VercelRequest/Response sobre Node.
+        // /api/historial, /api/goleadores, /api/posiciones, /api/predicciones,
+        // /api/llave → endpoints JSON de lectura. Shim VercelRequest/Response.
         if (
           url.pathname === '/api/historial' ||
           url.pathname === '/api/goleadores' ||
           url.pathname === '/api/posiciones' ||
-          url.pathname === '/api/predicciones'
+          url.pathname === '/api/predicciones' ||
+          url.pathname === '/api/llave'
         ) {
           try {
             const query: Record<string, string> = {};

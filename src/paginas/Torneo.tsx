@@ -3,6 +3,7 @@ import { LISTA_ESTADIOS, rutaImagenEstadio } from '../datos/estadios.js';
 import { estadioPorSede } from '../datos/estadios.js';
 import { PARTIDOS } from '../datos/partidos.js';
 import { CanalWhatsApp } from '../componentes/Llamados';
+import LlaveEnVivo from '../componentes/LlaveEnVivo';
 
 /**
  * Explicador del Mundial 2026, editorial.
@@ -90,19 +91,8 @@ function Torneo() {
           </p>
         </section>
 
-        {/* MEJORES TERCEROS */}
-        <section className="rounded-lg border border-tinta-linea bg-tinta-tarjeta p-6 sm:p-8 max-w-3xl">
-          <p className="kicker">El detalle clave</p>
-          <h2 className="mt-3 font-display text-2xl sm:text-3xl font-semibold text-tinta-titulo">
-            Los 8 mejores terceros
-          </h2>
-          <p className="mt-3 text-[15px] text-tinta-cuerpo leading-relaxed">
-            Avanzan los dos primeros de cada grupo (24 equipos) más los 8 mejores
-            terceros, elegidos por puntos, diferencia de gol y goles a favor.
-            Por eso un empate temprano puede pesar muchísimo: un solo punto separa
-            seguir en el torneo de volver a casa.
-          </p>
-        </section>
+        {/* LLAVE EN VIVO — Ronda de 32 + carrera por los terceros */}
+        <LlaveEnVivo />
 
         {/* SEDES */}
         <section>
