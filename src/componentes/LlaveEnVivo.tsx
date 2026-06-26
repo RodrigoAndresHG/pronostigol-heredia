@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   Llave,
   RondaLlave,
@@ -81,24 +81,8 @@ function LlaveEnVivo() {
             </p>
           )}
 
-          <p className="mt-6 sm:hidden font-mono text-[10px] text-tinta-mute uppercase tracking-wide">
-            Desliza para ver toda la llave →
-          </p>
-
-          {/* ÁRBOL DE LA LLAVE */}
-          <div className="mt-4 overflow-x-auto pb-4">
-            <div className="flex items-start min-w-[860px]">
-              {llave.rondas.map((ronda, i) => (
-                <ColumnaRonda
-                  key={ronda.fase}
-                  ronda={ronda}
-                  nivel={i}
-                  primera={i === 0}
-                  ultima={i === llave.rondas.length - 1}
-                />
-              ))}
-            </div>
-          </div>
+          {/* LLAVE ESPEJADA: dos mitades que convergen en la final, al centro. */}
+          <LlaveEspejada llave={llave} />
 
           {/* CARRERA POR LOS TERCEROS */}
           <div className="mt-12">
@@ -119,46 +103,154 @@ function LlaveEnVivo() {
   );
 }
 
-function ColumnaRonda({
-  ronda,
-  nivel,
-  primera,
-  ultima,
-}: {
-  ronda: RondaLlave;
+interface ColumnaLlave {
+  fase: string;
+  etiqueta: string;
   nivel: number;
-  primera: boolean;
-  ultima: boolean;
-}) {
-  // Banda de altura fija por cruce: doble en cada ronda → columnas alineadas.
-  const banda = BANDA_BASE * 2 ** nivel;
+  cruces: CruceResuelto[];
+}
+
+/** Nivel de cada fase: fija la altura de banda (BANDA_BASE · 2^nivel). */
+const NIVEL: Record<string, number> = { r32: 0, r16: 1, cuartos: 2, semis: 3 };
+
+/**
+ * La llave dibujada como cuadro ESPEJADO, al estilo del bracket oficial: la
+ * mitad izquierda fluye hacia la derecha, la derecha hacia la izquierda, y
+ * ambas convergen en la final, al centro. Cada ronda se parte por la mitad: los
+ * datos vienen en orden planar, así que la primera mitad es el lado izquierdo.
+ */
+function LlaveEspejada({ llave }: { llave: Llave }) {
+  // El cuadro tiene ancho fijo (~1140px): casi siempre desborda. Mostramos el
+  // hint de "desliza" solo cuando de verdad hay scroll horizontal.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [overflow, setOverflow] = useState(false);
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const medir = () => setOverflow(el.scrollWidth > el.clientWidth + 4);
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
+
+  const sinFinal = llave.rondas.filter((r) => r.fase !== 'final');
+  const final = llave.rondas.find((r) => r.fase === 'final')?.cruces[0];
+  const col = (r: RondaLlave, cruces: CruceResuelto[]): ColumnaLlave => ({
+    fase: r.fase,
+    etiqueta: r.etiqueta,
+    nivel: NIVEL[r.fase],
+    cruces,
+  });
+  // Cada ronda se parte por la mitad (orden planar: 1.ª mitad = lado izquierdo).
+  // Ambos lados se construyen en orden CRONOLÓGICO (R32→semis) para que el DOM
+  // sea lógico para lectores de pantalla; el lado derecho se espeja sólo con
+  // CSS (flex-row-reverse), así visualmente las semis quedan junto al centro.
+  const izq = sinFinal.map((r) => col(r, r.cruces.slice(0, r.cruces.length / 2)));
+  const der = sinFinal.map((r) => col(r, r.cruces.slice(r.cruces.length / 2)));
+
   return (
-    <div className="flex flex-col flex-1 min-w-[150px]" role="group" aria-label={ronda.etiqueta}>
-      <p className="h-6 font-mono text-[10px] uppercase tracking-wide text-tinta-mute text-center">
-        {ronda.etiqueta}
+    <div className="mt-4">
+      {overflow && (
+        <p className="mb-2 font-mono text-[10px] text-tinta-mute uppercase tracking-wide">
+          Desliza para ver toda la llave →
+        </p>
+      )}
+      <div ref={scrollRef} className="overflow-x-auto pb-4">
+        <div className="flex items-start w-max mx-auto">
+          <div
+            className="flex"
+            role="group"
+            aria-label="Mitad izquierda del cuadro, de la Ronda de 32 a la semifinal"
+          >
+            {izq.map((c) => (
+              <ColumnaLado key={`i-${c.fase}`} col={c} lado="izq" />
+            ))}
+          </div>
+          <Centro final={final} />
+          <div
+            className="flex flex-row-reverse"
+            role="group"
+            aria-label="Mitad derecha del cuadro, de la Ronda de 32 a la semifinal"
+          >
+            {der.map((c) => (
+              <ColumnaLado key={`d-${c.fase}`} col={c} lado="der" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ColumnaLado({ col, lado }: { col: ColumnaLlave; lado: 'izq' | 'der' }) {
+  const banda = BANDA_BASE * 2 ** col.nivel;
+  const der = lado === 'der';
+  const esR32 = col.fase === 'r32';
+  return (
+    <div
+      className="flex flex-col min-w-[124px]"
+      role="group"
+      aria-label={`${col.etiqueta} · mitad ${der ? 'derecha' : 'izquierda'}`}
+    >
+      <p className="h-6 font-mono text-[9px] uppercase tracking-wide text-tinta-mute text-center">
+        {col.etiqueta}
       </p>
       <div className="flex flex-col">
-        {ronda.cruces.map((c) => (
+        {col.cruces.map((c) => (
           <div
             key={c.numero}
             className="flex items-center relative"
             style={{ height: banda }}
           >
-            {/* Conector vertical que une a los dos clasificados previos. */}
-            {!primera && (
-              <span className="absolute left-0 top-1/4 h-1/2 w-px bg-tinta-linea" />
+            {/* Unión de los dos clasificados previos, del lado exterior. */}
+            {!esR32 && (
+              <span
+                className={`absolute top-1/4 h-1/2 w-px bg-tinta-linea ${der ? 'right-0' : 'left-0'}`}
+              />
             )}
-            {/* Tramo horizontal del conector vertical hacia este cruce. */}
-            {!primera && (
-              <span className="absolute left-0 top-1/2 w-2.5 h-px bg-tinta-linea" />
+            {!esR32 && (
+              <span
+                className={`absolute top-1/2 w-2.5 h-px bg-tinta-linea ${der ? 'right-0' : 'left-0'}`}
+              />
             )}
-            {/* Tramo horizontal hacia la ronda siguiente. */}
-            {!ultima && (
-              <span className="absolute right-0 top-1/2 w-2.5 h-px bg-tinta-linea" />
-            )}
+            {/* Tramo hacia el centro (la ronda siguiente). */}
+            <span
+              className={`absolute top-1/2 w-2.5 h-px bg-tinta-linea ${der ? 'left-0' : 'right-0'}`}
+            />
             <Cruce c={c} />
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** Columna central: el trofeo y la final, alineada con las dos semifinales. */
+function Centro({ final }: { final?: CruceResuelto }) {
+  return (
+    <div
+      className="flex flex-col items-center min-w-[152px] px-2"
+      role="group"
+      aria-label="Final"
+    >
+      <div className="h-6" />
+      {/* La TARJETA va centrada en el eje (igual que las semis); el trofeo y el
+          rótulo flotan justo encima sin desplazar su centro. */}
+      <div
+        className="flex items-center justify-center"
+        style={{ height: BANDA_BASE * 8 }}
+      >
+        {final && (
+          <div className="relative w-[148px]">
+            <div className="absolute bottom-full inset-x-0 mb-2 flex flex-col items-center">
+              <span className="text-4xl leading-none" aria-hidden="true">
+                🏆
+              </span>
+              <span className="kicker mt-1 whitespace-nowrap">La final</span>
+            </div>
+            <Cruce c={final} />
+          </div>
+        )}
       </div>
     </div>
   );
