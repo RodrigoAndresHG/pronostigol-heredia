@@ -54,10 +54,10 @@ function LlaveEnVivo() {
         El cuadro, de la Ronda de 32 a la final
       </h2>
       <p className="mt-3 max-w-lectura text-[15px] text-tinta-cuerpo leading-relaxed">
-        Se llena solo con cada resultado. Los{' '}
-        <span className="text-verde">clasificados directos</span> (1º y 2º) se
-        fijan al cerrar su grupo; los cruces con tercero muestran sus grupos
-        candidatos hasta que cierren los 12 grupos.
+        Se llena solo con cada resultado. Con los 12 grupos cerrados, la{' '}
+        <span className="text-verde">Ronda de 32 ya está definida</span> —
+        incluidos los 8 mejores terceros en su cruce. Ahora los ganadores
+        avanzan ronda a ronda hasta la final.
       </p>
 
       {estado === 'cargando' && (

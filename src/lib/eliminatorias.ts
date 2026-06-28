@@ -1,7 +1,7 @@
 import type { LetraGrupo } from '../tipos/index.js';
 import { calcularPosiciones } from './posiciones.js';
 import { LETRAS_GRUPOS } from '../datos/grupos.js';
-import { PARTIDOS } from '../datos/partidos.js';
+import { PARTIDOS, partidoPorId } from '../datos/partidos.js';
 import {
   RONDA_32,
   AVANCE,
@@ -121,11 +121,30 @@ export function construirLlave(resultados: ResultadoMin[]): Llave {
     return { etiqueta: slot.etiqueta, confirmado: false };
   };
 
-  const cruces32: CruceResuelto[] = RONDA_32.map((c) => ({
-    numero: c.numero,
-    local: ocupante(c.local),
-    visitante: ocupante(c.visitante),
-  }));
+  // Con los 12 grupos cerrados, la R32 ya está definida: usamos los fixtures
+  // con equipos resueltos como fuente de verdad — eso ubica también a los
+  // terceros (Anexo C). Antes de eso, derivamos por slot desde las posiciones
+  // (llenado en vivo: 1º/2º provisional→confirmado, terceros como etiqueta).
+  const todosLosGruposCerrados = LETRAS_GRUPOS.every(completo);
+  const cruces32: CruceResuelto[] = RONDA_32.map((c) => {
+    const fixture = todosLosGruposCerrados ? partidoPorId(`R32-${c.numero}`) : undefined;
+    if (fixture && fixture.fase === 'r32') {
+      return {
+        numero: c.numero,
+        local: { etiqueta: c.local.etiqueta, equipoId: fixture.equipoLocalId, confirmado: true },
+        visitante: {
+          etiqueta: c.visitante.etiqueta,
+          equipoId: fixture.equipoVisitanteId,
+          confirmado: true,
+        },
+      };
+    }
+    return {
+      numero: c.numero,
+      local: ocupante(c.local),
+      visitante: ocupante(c.visitante),
+    };
+  });
 
   // Árbol completo en columnas para dibujar la llave. La R32 va resuelta y en
   // orden "planar"; las rondas siguientes muestran al ganador pendiente de cada

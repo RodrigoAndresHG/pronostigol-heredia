@@ -84,7 +84,10 @@ function indicePorPar() {
  * Empareja matches de openfootball con NUESTROS partidos (por par de
  * equipos) y alinea la orientación a nuestro local/visitante — incluido el
  * swap de goles si openfootball lista los equipos al revés. PURA y testeable.
- * Solo devuelve los jugados que matchean (fase de grupos).
+ * Devuelve los jugados que matchean por nombre de equipo: la fase de grupos y
+ * también la Ronda de 32 una vez que sus equipos están resueltos (esto último
+ * es intencional: el cron ingiere R32 como respaldo del registro manual). Los
+ * cruces aún con placeholders (3A/B/.., Gan. 74) no matchean y se ignoran.
  */
 export function emparejarMatches(matches: MatchOF[]): ResultadoIngerible[] {
   const idx = indicePorPar();
@@ -98,7 +101,7 @@ export function emparejarMatches(matches: MatchOF[]): ResultadoIngerible[] {
     if (!iso1 || !iso2) continue; // equipo no reconocido (placeholder de eliminatoria)
 
     const partido = idx.get([iso1, iso2].sort().join('|'));
-    if (!partido) continue; // no es de fase de grupos / no está en nuestro calendario
+    if (!partido) continue; // ese cruce no está en nuestro calendario
 
     // Alinear orientación: ¿team1 es nuestro local o nuestro visitante?
     const team1EsLocal = partido.equipoLocalId === iso1;

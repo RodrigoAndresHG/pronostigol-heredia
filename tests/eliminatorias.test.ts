@@ -7,6 +7,8 @@
 import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { construirLlave } from '../src/lib/eliminatorias.js';
+import { calcularPosiciones } from '../src/lib/posiciones.js';
+import { partidoPorId } from '../src/datos/partidos.js';
 import { RONDA_32, ORDEN_R32 } from '../src/datos/eliminatorias.js';
 
 function res(partidoId: string, golesLocal: number, golesVisitante: number) {
@@ -99,4 +101,38 @@ test('grupo apenas arrancado (<4 jugados): slot sin ocupante, solo etiqueta', ()
   const m79 = cruce(llave, 79);
   assert.equal(m79.local.equipoId, undefined);
   assert.equal(m79.local.etiqueta, '1A');
+});
+
+// ─── Fixtures R32 resueltos (fase de grupos cerrada) ──────────────────
+// Cruces verificados contra el bracket oficial (Anexo C) + nuestras posiciones.
+
+test('los 16 fixtures de la Ronda de 32 están resueltos con los equipos correctos', () => {
+  const esperado: Record<number, [string, string]> = {
+    73: ['RSA', 'CAN'], 74: ['GER', 'PAR'], 75: ['NED', 'MAR'], 76: ['BRA', 'JPN'],
+    77: ['FRA', 'SWE'], 78: ['CIV', 'NOR'], 79: ['MEX', 'ECU'], 80: ['ENG', 'COD'],
+    81: ['USA', 'BIH'], 82: ['BEL', 'SEN'], 83: ['POR', 'CRO'], 84: ['ESP', 'AUT'],
+    85: ['SUI', 'ALG'], 86: ['ARG', 'CPV'], 87: ['COL', 'GHA'], 88: ['AUS', 'EGY'],
+  };
+  for (const [numero, [local, visitante]] of Object.entries(esperado)) {
+    const p = partidoPorId(`R32-${numero}`);
+    assert.ok(p, `falta el fixture R32-${numero}`);
+    assert.equal(p!.fase, 'r32');
+    assert.equal(p!.equipoLocalId, local, `R32-${numero} local`);
+    assert.equal(p!.equipoVisitanteId, visitante, `R32-${numero} visitante`);
+  }
+});
+
+test('calcularPosiciones IGNORA resultados de R32 (no contamina la tabla de grupos)', () => {
+  const soloGrupos = calcularPosiciones(GRUPO_A_COMPLETO);
+  // MEX (Grupo A) juega también en R32-79; ese resultado NO debe sumar al grupo.
+  const conR32 = calcularPosiciones([
+    ...GRUPO_A_COMPLETO,
+    res('R32-79', 5, 0),
+  ]);
+  const a1 = soloGrupos.find((g) => g.grupo === 'A')!.filas;
+  const a2 = conR32.find((g) => g.grupo === 'A')!.filas;
+  assert.deepEqual(
+    a2.map((f) => [f.equipoId, f.pts, f.pj, f.gf]),
+    a1.map((f) => [f.equipoId, f.pts, f.pj, f.gf])
+  );
 });

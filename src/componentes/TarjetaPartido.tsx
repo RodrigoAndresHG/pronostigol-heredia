@@ -108,7 +108,11 @@ function TarjetaPartido({ partido, mostrarFecha = false, resultado }: Props) {
         {/* Meta a la derecha */}
         <div className="shrink-0 text-right hidden sm:block">
           <p className="font-mono text-[11px] text-tinta-mute uppercase tracking-wide">
-            {partido.grupo ? `Grupo ${partido.grupo}` : partido.fase}
+            {partido.grupo
+              ? `Grupo ${partido.grupo}`
+              : partido.fase === 'r32'
+                ? 'Ronda de 32'
+                : partido.fase}
           </p>
           <p className="font-mono text-[11px] text-tinta-mute mt-0.5">
             {CODIGO_PAIS[partido.paisAnfitrion]}
