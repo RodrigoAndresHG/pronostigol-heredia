@@ -25,10 +25,13 @@ import { claveDiaLocal, fechaCompleta, horaLocal } from '../lib/zonaHoraria';
 function Inicio() {
   // El hero apunta al PRÓXIMO partido (no al inaugural, ya jugado): el siguiente
   // con kickoff futuro; si el torneo terminó, el último del calendario.
-  const proximo = useMemo(() => {
+  const { proximo, hayFuturo } = useMemo(() => {
     const ahora = new Date().getTime();
     const futuros = PARTIDOS.filter((p) => new Date(p.fechaISO).getTime() > ahora);
-    return futuros[0] ?? PARTIDOS[PARTIDOS.length - 1];
+    return {
+      proximo: futuros[0] ?? PARTIDOS[PARTIDOS.length - 1],
+      hayFuturo: futuros.length > 0,
+    };
   }, []);
   const local = equipoPorId(proximo.equipoLocalId);
   const visitante = equipoPorId(proximo.equipoVisitanteId);
@@ -105,11 +108,13 @@ function Inicio() {
 
           {/* Cuenta regresiva al próximo partido */}
           <div className="mt-10 pt-8 border-t border-tinta-lineaFuerte/40 max-w-2xl">
-            <p className="kicker">Faltan para el próximo partido</p>
+            <p className="kicker">
+              {hayFuturo ? 'Faltan para el próximo partido' : 'El Mundial terminó'}
+            </p>
             <div className="mt-4">
               <CuentaRegresiva
                 fechaObjetivoISO={proximo.fechaISO}
-                textoFinalizado="Hay partido en juego"
+                textoFinalizado={hayFuturo ? 'Hay partido en juego' : 'Hasta el próximo Mundial'}
               />
             </div>
             <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[13px] text-tinta-mute">

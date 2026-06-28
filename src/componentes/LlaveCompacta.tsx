@@ -5,6 +5,7 @@ import type { ConsensoPartido } from '../../api/predicciones.ts';
 import { equipoPorId } from '../datos/equipos.js';
 import { partidoPorId } from '../datos/partidos.js';
 import { usePredicciones } from '../juego/usePredicciones';
+import { fechaCorta, horaLocal } from '../lib/zonaHoraria';
 
 /**
  * La Llave, COMPACTA y mobile-first — pensada para el landing.
@@ -26,13 +27,6 @@ const CHIP: Record<string, string> = {
   final: 'Final',
 };
 const NUM_RONDA: Record<string, number> = { r32: 32, r16: 16, cuartos: 8, semis: 4, final: 2 };
-
-function fechaCorta(iso: string): string {
-  const d = new Date(iso);
-  const dia = d.toLocaleDateString('es', { day: 'numeric', month: 'short' });
-  const hora = d.toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' });
-  return `${dia} · ${hora}`;
-}
 
 function LlaveCompacta() {
   const [llave, setLlave] = useState<Llave | null>(null);
@@ -128,7 +122,7 @@ function LlaveCompacta() {
       )}
 
       {estado === 'ok' && ronda && (
-        <div className="mt-5 space-y-2.5">
+        <div className="mt-5 grid gap-2.5 sm:grid-cols-2 max-w-4xl">
           {cruces.map((c) => (
             <FilaCruce
               key={c.numero}
@@ -179,7 +173,9 @@ function FilaCruce({
     >
       <div className="flex items-center justify-between">
         <span className="font-mono text-[10px] uppercase tracking-wide text-tinta-mute">
-          {partido ? fechaCorta(partido.fechaISO) : `Partido ${cruce.numero}`}
+          {partido
+            ? `${fechaCorta(partido.fechaISO)} · ${horaLocal(partido.fechaISO)}`
+            : `Partido ${cruce.numero}`}
         </span>
         {ecuador ? (
           <span className="font-mono text-[9px] uppercase tracking-wide text-verde border border-verde/40 rounded px-1.5 py-px">
@@ -230,7 +226,7 @@ function LadoEquipo({
   if (!o.equipoId) {
     return (
       <span
-        className={`font-mono text-[12px] text-tinta-mute truncate ${alineadoDerecha ? 'text-right' : ''}`}
+        className={`font-mono text-[12px] text-tinta-mute truncate min-w-0 ${alineadoDerecha ? 'text-right' : ''}`}
       >
         {o.etiqueta}
       </span>
