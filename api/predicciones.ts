@@ -27,6 +27,8 @@ export interface ConsensoPartido {
   favorito: 'local' | 'empate' | 'visitante';
   /** Probabilidad del favorito, 0..100 (entero). */
   pct: number;
+  /** [local, empate, visitante] en %, suman 100. Para la barra de consenso. */
+  prob: [number, number, number];
   /** Marcador de consenso "goles_local-goles_visitante", o null. */
   marcador: string | null;
 }
@@ -89,6 +91,7 @@ export function construirConsensos(predicciones: Prediccion[]): ConsensoPartido[
       veredicto: p.veredicto,
       favorito,
       pct,
+      prob: porcentajes(p.probabilidadFinal),
       marcador: marcadorConsenso(p.respuestasIA),
     };
   });

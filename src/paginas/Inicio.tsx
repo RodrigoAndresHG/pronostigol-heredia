@@ -8,6 +8,7 @@ import TarjetaJugable from '../juego/TarjetaJugable';
 import { usePredicciones } from '../juego/usePredicciones';
 import CuentaRegresiva from '../componentes/visual/CuentaRegresiva';
 import CapaParticulas from '../componentes/visual/CapaParticulas';
+import LlaveCompacta from '../componentes/LlaveCompacta';
 import { CanalWhatsApp, PuenteMetodo } from '../componentes/Llamados';
 import Reveal from '../movimiento/Reveal';
 import { claveDiaLocal, fechaCompleta, horaLocal } from '../lib/zonaHoraria';
@@ -22,10 +23,19 @@ import { claveDiaLocal, fechaCompleta, horaLocal } from '../lib/zonaHoraria';
  *   5. CTA final hacia el método.
  */
 function Inicio() {
-  const inaugural = PARTIDOS[0];
-  const local = equipoPorId(inaugural.equipoLocalId);
-  const visitante = equipoPorId(inaugural.equipoVisitanteId);
-  const estadio = estadioPorSede(inaugural.sede);
+  // El hero apunta al PRÓXIMO partido (no al inaugural, ya jugado): el siguiente
+  // con kickoff futuro; si el torneo terminó, el último del calendario.
+  const { proximo, hayFuturo } = useMemo(() => {
+    const ahora = new Date().getTime();
+    const futuros = PARTIDOS.filter((p) => new Date(p.fechaISO).getTime() > ahora);
+    return {
+      proximo: futuros[0] ?? PARTIDOS[PARTIDOS.length - 1],
+      hayFuturo: futuros.length > 0,
+    };
+  }, []);
+  const local = equipoPorId(proximo.equipoLocalId);
+  const visitante = equipoPorId(proximo.equipoVisitanteId);
+  const estadio = estadioPorSede(proximo.sede);
 
   // "Próximos partidos" acorde al día: desde hoy hacia adelante. Incluye los
   // de hoy ya jugados (que muestran su marcador y el sello IA). Si el torneo
@@ -85,51 +95,98 @@ function Inicio() {
         <div className="relative z-10 w-full max-w-6xl mx-auto px-5 sm:px-8 pb-16 pt-28">
           <Reveal>
             <p className="kicker text-cyan">
-              Mundial 2026 · 11 jun — 19 jul · Consenso de 3 IAs
+              Mundial 2026 · Eliminatorias · Consenso de 3 IAs
             </p>
             <h1 className="mt-4 font-display font-bold text-tinta-titulo leading-[1.02] tracking-tight text-[2.75rem] sm:text-7xl max-w-[16ch]">
-              Predicciones que tres modelos firman juntos.
+              El Mundial, leído por tres IAs.
             </h1>
             <p className="mt-6 font-display text-xl sm:text-2xl text-tinta-cuerpo leading-snug max-w-[46ch]">
-              Claude, GPT y Gemini analizan cada partido. Mostramos dónde
-              coinciden, dónde no, y cuándo el mercado podría equivocarse.
+              Claude, GPT y Gemini predicen cada cruce de la llave. Mira dónde
+              coinciden, dónde chocan, y si aciertan.
             </p>
           </Reveal>
 
-          {/* Cuenta regresiva al inaugural */}
+          {/* Cuenta regresiva al próximo partido */}
           <div className="mt-10 pt-8 border-t border-tinta-lineaFuerte/40 max-w-2xl">
-            <p className="kicker">Faltan para el partido inaugural</p>
+            <p className="kicker">
+              {hayFuturo ? 'Faltan para el próximo partido' : 'El Mundial terminó'}
+            </p>
             <div className="mt-4">
               <CuentaRegresiva
-                fechaObjetivoISO={inaugural.fechaISO}
-                textoFinalizado="El Mundial ya empezó"
+                fechaObjetivoISO={proximo.fechaISO}
+                textoFinalizado={hayFuturo ? 'Hay partido en juego' : 'Hasta el próximo Mundial'}
               />
             </div>
             <div className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[13px] text-tinta-mute">
-              <span className="text-tinta-cuerpo font-semibold">{local.id}</span>
+              <span className="text-tinta-cuerpo font-semibold">
+                {local.banderaEmoji} {local.id}
+              </span>
               <span>vs</span>
-              <span className="text-tinta-cuerpo font-semibold">{visitante.id}</span>
+              <span className="text-tinta-cuerpo font-semibold">
+                {visitante.id} {visitante.banderaEmoji}
+              </span>
               <span className="text-tinta-linea">·</span>
-              <span>{fechaCompleta(inaugural.fechaISO)}</span>
+              <span>{fechaCompleta(proximo.fechaISO)}</span>
               <span className="text-tinta-linea">·</span>
-              <span>{horaLocal(inaugural.fechaISO)}</span>
+              <span>{horaLocal(proximo.fechaISO)}</span>
             </div>
           </div>
 
           <div className="mt-9 flex flex-wrap gap-4">
-            <Link
-              to="/calendario"
+            <a
+              href="#llave"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-md bg-verde text-tinta-fondo font-semibold text-[15px] hover:bg-verde-hover transition-colors"
             >
-              Ver calendario <span aria-hidden>→</span>
-            </Link>
+              Ver la llave <span aria-hidden>↓</span>
+            </a>
             <Link
-              to="/torneo"
+              to="/calendario"
               className="inline-flex items-center px-6 py-3 rounded-md border border-tinta-lineaFuerte text-tinta-cuerpo font-medium text-[15px] hover:border-tinta-mute hover:text-tinta-titulo transition-colors"
             >
-              Conocer el torneo
+              Calendario
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* ─── LA LLAVE (protagonista) ────────────────────────────────── */}
+      <section
+        id="llave"
+        className="scroll-mt-20 max-w-6xl mx-auto px-5 sm:px-8 py-16 sm:py-24"
+      >
+        <Reveal>
+          <LlaveCompacta />
+        </Reveal>
+      </section>
+
+      {/* ─── EL CALENDARIO (junto a la llave) ───────────────────────── */}
+      <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-16 sm:pb-24">
+        <div className="flex items-baseline justify-between border-b border-tinta-linea pb-4">
+          <div>
+            <p className="kicker">El calendario</p>
+            <h2 className="mt-2 font-display text-2xl sm:text-3xl font-semibold text-tinta-titulo">
+              Próximos partidos
+            </h2>
+          </div>
+          <Link to="/calendario" className="font-mono text-[13px] text-verde hover:text-verde-hover transition-colors whitespace-nowrap">
+            Ver todo →
+          </Link>
+        </div>
+        <div className="mt-4 divide-y divide-tinta-linea">
+          {proximos.map((partido) => (
+            <TarjetaJugable
+              key={partido.id}
+              partido={partido}
+              mostrarFecha
+              resultado={resultadosPorId.get(partido.id)}
+              consenso={consensos.get(partido.id)}
+            />
+          ))}
+        </div>
+
+        {/* Captación: el fan que mira los próximos partidos → al canal */}
+        <div className="mt-8">
+          <CanalWhatsApp variante="banda" />
         </div>
       </section>
 
@@ -203,37 +260,6 @@ function Inicio() {
             créditos →
           </Link>
         </p>
-      </section>
-
-      {/* ─── MATCHDAY ──────────────────────────────────────────────── */}
-      <section className="max-w-6xl mx-auto px-5 sm:px-8 pb-20 sm:pb-28">
-        <div className="flex items-baseline justify-between border-b border-tinta-linea pb-4">
-          <div>
-            <p className="kicker">Matchday</p>
-            <h2 className="mt-2 font-display text-2xl sm:text-3xl font-semibold text-tinta-titulo">
-              Próximos partidos
-            </h2>
-          </div>
-          <Link to="/calendario" className="font-mono text-[13px] text-verde hover:text-verde-hover transition-colors whitespace-nowrap">
-            Ver todo →
-          </Link>
-        </div>
-        <div className="mt-4 divide-y divide-tinta-linea">
-          {proximos.map((partido) => (
-            <TarjetaJugable
-              key={partido.id}
-              partido={partido}
-              mostrarFecha
-              resultado={resultadosPorId.get(partido.id)}
-              consenso={consensos.get(partido.id)}
-            />
-          ))}
-        </div>
-
-        {/* Captación: el fan que mira los próximos partidos → al canal */}
-        <div className="mt-8">
-          <CanalWhatsApp variante="banda" />
-        </div>
       </section>
 
       {/* ─── CIERRE: puente al método (LMS) ────────────────────────── */}
