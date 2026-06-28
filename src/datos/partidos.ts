@@ -127,18 +127,69 @@ const FIXTURES: FixtureCrudo[] = [
   { grupo: 'L', matchday: 3, ordenEnMD: 2, kickoffUTC: '2026-06-27T21:00:00Z', local: 'CRO', visitante: 'GHA', sede: 'Lincoln Financial, Filadelfia', paisAnfitrion: 'Estados Unidos' },  // 5pm EDT
 ];
 
-/** Calendario completo de la fase de grupos (72 partidos), ordenado por kickoff. */
-export const PARTIDOS: Partido[] = FIXTURES.map((fixture): Partido => ({
-  id: `${fixture.grupo}-MD${fixture.matchday}-${fixture.ordenEnMD}`,
-  fechaISO: fixture.kickoffUTC,
-  sede: fixture.sede,
-  paisAnfitrion: fixture.paisAnfitrion,
-  equipoLocalId: fixture.local,
-  equipoVisitanteId: fixture.visitante,
-  fase: 'grupos' satisfies FasePartido,
-  grupo: fixture.grupo,
-  estado: 'programado',
-})).sort((a, b) => a.fechaISO.localeCompare(b.fechaISO));
+/**
+ * RONDA DE 32 — fixtures con equipos YA RESUELTOS (la fase de grupos terminó).
+ *
+ * Los 16 cruces se fijaron al cerrar los 12 grupos: 12 primeros + 12 segundos
+ * + 8 mejores terceros. La ubicación de cada tercero (Anexo C de FIFA) se
+ * verificó contra el bracket oficial (Wikipedia + cross-check) y contra las
+ * posiciones que calculamos de nuestros propios resultados. Id = `R32-<nº>`
+ * con el número de partido oficial (73–88). Horarios convertidos a UTC.
+ */
+const FIXTURES_R32: Partido[] = [
+  r32(73, '2026-06-28T19:00:00Z', 'RSA', 'CAN', 'SoFi Stadium, Los Ángeles',     'Estados Unidos'),
+  r32(76, '2026-06-29T17:00:00Z', 'BRA', 'JPN', 'NRG Stadium, Houston',          'Estados Unidos'),
+  r32(74, '2026-06-29T20:30:00Z', 'GER', 'PAR', 'Gillette Stadium, Boston',      'Estados Unidos'),
+  r32(75, '2026-06-30T01:00:00Z', 'NED', 'MAR', 'Estadio BBVA, Monterrey',       'México'),
+  r32(78, '2026-06-30T17:00:00Z', 'CIV', 'NOR', 'AT&T Stadium, Dallas',          'Estados Unidos'),
+  r32(77, '2026-06-30T21:00:00Z', 'FRA', 'SWE', 'MetLife Stadium, Nueva York',   'Estados Unidos'),
+  r32(79, '2026-07-01T01:00:00Z', 'MEX', 'ECU', 'Estadio Azteca, CDMX',          'México'),
+  r32(80, '2026-07-01T16:00:00Z', 'ENG', 'COD', 'Mercedes-Benz, Atlanta',        'Estados Unidos'),
+  r32(82, '2026-07-01T20:00:00Z', 'BEL', 'SEN', 'Lumen Field, Seattle',          'Estados Unidos'),
+  r32(81, '2026-07-02T00:00:00Z', 'USA', 'BIH', "Levi's Stadium, San Francisco", 'Estados Unidos'),
+  r32(84, '2026-07-02T19:00:00Z', 'ESP', 'AUT', 'SoFi Stadium, Los Ángeles',     'Estados Unidos'),
+  r32(83, '2026-07-02T23:00:00Z', 'POR', 'CRO', 'BMO Field, Toronto',            'Canadá'),
+  r32(85, '2026-07-03T03:00:00Z', 'SUI', 'ALG', 'BC Place, Vancouver',           'Canadá'),
+  r32(88, '2026-07-03T18:00:00Z', 'AUS', 'EGY', 'AT&T Stadium, Dallas',          'Estados Unidos'),
+  r32(86, '2026-07-03T22:00:00Z', 'ARG', 'CPV', 'Hard Rock Stadium, Miami',      'Estados Unidos'),
+  r32(87, '2026-07-04T01:30:00Z', 'COL', 'GHA', 'Arrowhead Stadium, Kansas City','Estados Unidos'),
+];
+
+function r32(
+  numero: number,
+  fechaISO: string,
+  local: string,
+  visitante: string,
+  sede: string,
+  paisAnfitrion: Partido['paisAnfitrion']
+): Partido {
+  return {
+    id: `R32-${numero}`,
+    fechaISO,
+    sede,
+    paisAnfitrion,
+    equipoLocalId: local,
+    equipoVisitanteId: visitante,
+    fase: 'r32' satisfies FasePartido,
+    estado: 'programado',
+  };
+}
+
+/** Calendario completo (fase de grupos + Ronda de 32), ordenado por kickoff. */
+export const PARTIDOS: Partido[] = [
+  ...FIXTURES.map((fixture): Partido => ({
+    id: `${fixture.grupo}-MD${fixture.matchday}-${fixture.ordenEnMD}`,
+    fechaISO: fixture.kickoffUTC,
+    sede: fixture.sede,
+    paisAnfitrion: fixture.paisAnfitrion,
+    equipoLocalId: fixture.local,
+    equipoVisitanteId: fixture.visitante,
+    fase: 'grupos' satisfies FasePartido,
+    grupo: fixture.grupo,
+    estado: 'programado',
+  })),
+  ...FIXTURES_R32,
+].sort((a, b) => a.fechaISO.localeCompare(b.fechaISO));
 
 /** Índice por ID para acceso O(1). */
 export const PARTIDOS_POR_ID: Record<string, Partido> = Object.fromEntries(

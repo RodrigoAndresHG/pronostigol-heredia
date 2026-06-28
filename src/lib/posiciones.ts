@@ -49,7 +49,7 @@ export function calcularPosiciones(resultados: ResultadoMin[]): GrupoPosiciones[
 
   for (const r of resultados) {
     const p = partidoPorId(r.partidoId);
-    if (!p) continue; // resultado de un partido fuera de la fase de grupos
+    if (!p || p.fase !== 'grupos') continue; // sólo fase de grupos (no R32+)
     const local = tabla.get(p.equipoLocalId);
     const visitante = tabla.get(p.equipoVisitanteId);
     if (!local || !visitante) continue;
