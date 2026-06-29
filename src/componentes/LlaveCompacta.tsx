@@ -160,6 +160,9 @@ function FilaCruce({
   const partido = esR32 ? partidoPorId(idPartido) : undefined;
   const ecuador =
     cruce.local.equipoId === 'ECU' || cruce.visitante.equipoId === 'ECU';
+  const fin = cruce.resultado; // presente solo si ya se jugó
+  // ¿Acertó el consenso el ganador (1X2 de los 90')?
+  const aciertoIA = fin && consenso ? consenso.favorito === fin.ganador : null;
 
   const contenido = (
     <article
@@ -177,7 +180,11 @@ function FilaCruce({
             ? `${fechaCorta(partido.fechaISO)} · ${horaLocal(partido.fechaISO)}`
             : `Partido ${cruce.numero}`}
         </span>
-        {ecuador ? (
+        {fin ? (
+          <span className="font-mono text-[9px] uppercase tracking-wide text-verde border border-verde/40 rounded px-1.5 py-px">
+            Final
+          </span>
+        ) : ecuador ? (
           <span className="font-mono text-[9px] uppercase tracking-wide text-verde border border-verde/40 rounded px-1.5 py-px">
             🇪🇨 Ecuador
           </span>
@@ -189,13 +196,41 @@ function FilaCruce({
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <LadoEquipo o={cruce.local} destacado={consenso?.favorito === 'local'} />
-        <span className="font-mono text-[11px] text-tinta-mute shrink-0">vs</span>
-        <LadoEquipo o={cruce.visitante} destacado={consenso?.favorito === 'visitante'} alineadoDerecha />
+        <LadoEquipo
+          o={cruce.local}
+          destacado={fin ? fin.ganador === 'local' : consenso?.favorito === 'local'}
+        />
+        {fin ? (
+          <span className="font-mono text-[15px] font-semibold text-tinta-titulo shrink-0 tabular-nums">
+            {fin.golesLocal}
+            <span className="text-tinta-mute px-0.5">–</span>
+            {fin.golesVisitante}
+          </span>
+        ) : (
+          <span className="font-mono text-[11px] text-tinta-mute shrink-0">vs</span>
+        )}
+        <LadoEquipo
+          o={cruce.visitante}
+          destacado={fin ? fin.ganador === 'visitante' : consenso?.favorito === 'visitante'}
+          alineadoDerecha
+        />
       </div>
 
       {esR32 &&
-        (consenso ? (
+        (fin ? (
+          <div className="mt-2.5 flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-wide">
+            {aciertoIA === null ? (
+              <span className="text-tinta-mute">Resultado final</span>
+            ) : aciertoIA ? (
+              <span className="text-verde">✓ el consenso acertó</span>
+            ) : (
+              <span className="text-tinta-mute">✗ el consenso falló</span>
+            )}
+            {consenso?.marcador && (
+              <span className="text-tinta-mute shrink-0">pronóstico {consenso.marcador}</span>
+            )}
+          </div>
+        ) : consenso ? (
           <BarraConsenso consenso={consenso} />
         ) : (
           <p className="mt-2.5 font-mono text-[10px] uppercase tracking-wide text-tinta-mute">

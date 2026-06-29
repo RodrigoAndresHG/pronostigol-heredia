@@ -52,10 +52,24 @@ export interface OcupanteSlot {
   provisional?: boolean;
 }
 
+/** Marcador final de un cruce ya jugado. */
+export interface ResultadoCruce {
+  golesLocal: number;
+  golesVisitante: number;
+  /**
+   * Lado ganador en los 90'. 'empate' = igualdad en tiempo reglamentario;
+   * en eliminatoria se definiría por penales, dato que aún no guardamos, así
+   * que un empate NO propaga ganador a la ronda siguiente.
+   */
+  ganador: 'local' | 'visitante' | 'empate';
+}
+
 export interface CruceResuelto {
   numero: number;
   local: OcupanteSlot;
   visitante: OcupanteSlot;
+  /** Presente solo si el partido ya se jugó y su marcador está registrado. */
+  resultado?: ResultadoCruce;
 }
 
 export interface TerceroFila {
@@ -93,6 +107,12 @@ export function construirLlave(resultados: ResultadoMin[]): Llave {
   const jugados = new Map<LetraGrupo, number>();
   for (const l of LETRAS_GRUPOS) jugados.set(l, 0);
   const conResultado = new Set(resultados.map((r) => r.partidoId));
+  const resPorId = new Map(resultados.map((r) => [r.partidoId, r]));
+  const ganadorDeGoles = (
+    gl: number,
+    gv: number
+  ): 'local' | 'visitante' | 'empate' =>
+    gl > gv ? 'local' : gv > gl ? 'visitante' : 'empate';
   for (const p of PARTIDOS) {
     if (p.grupo && conResultado.has(p.id)) {
       jugados.set(p.grupo, (jugados.get(p.grupo) ?? 0) + 1);
@@ -128,32 +148,58 @@ export function construirLlave(resultados: ResultadoMin[]): Llave {
   const todosLosGruposCerrados = LETRAS_GRUPOS.every(completo);
   const cruces32: CruceResuelto[] = RONDA_32.map((c) => {
     const fixture = todosLosGruposCerrados ? partidoPorId(`R32-${c.numero}`) : undefined;
-    if (fixture && fixture.fase === 'r32') {
-      return {
-        numero: c.numero,
-        local: { etiqueta: c.local.etiqueta, equipoId: fixture.equipoLocalId, confirmado: true },
-        visitante: {
-          etiqueta: c.visitante.etiqueta,
-          equipoId: fixture.equipoVisitanteId,
-          confirmado: true,
-        },
+    const base: CruceResuelto =
+      fixture && fixture.fase === 'r32'
+        ? {
+            numero: c.numero,
+            local: { etiqueta: c.local.etiqueta, equipoId: fixture.equipoLocalId, confirmado: true },
+            visitante: {
+              etiqueta: c.visitante.etiqueta,
+              equipoId: fixture.equipoVisitanteId,
+              confirmado: true,
+            },
+          }
+        : {
+            numero: c.numero,
+            local: ocupante(c.local),
+            visitante: ocupante(c.visitante),
+          };
+    // Si el partido ya se jugó, adjuntamos su marcador final.
+    const r = resPorId.get(`R32-${c.numero}`);
+    if (r) {
+      base.resultado = {
+        golesLocal: r.golesLocal,
+        golesVisitante: r.golesVisitante,
+        ganador: ganadorDeGoles(r.golesLocal, r.golesVisitante),
       };
     }
-    return {
-      numero: c.numero,
-      local: ocupante(c.local),
-      visitante: ocupante(c.visitante),
-    };
+    return base;
   });
+
+  // Quién avanza: ganador (en los 90') de cada cruce ya resuelto. Un empate no
+  // resuelve avance (faltarían los penales). Hoy solo la R32 tiene resultados;
+  // al cargar fixtures de rondas posteriores (Fase B) este mapa los cubrirá.
+  const ganadorDe = new Map<number, string>();
+  for (const c of cruces32) {
+    if (c.resultado && c.resultado.ganador !== 'empate') {
+      const idGanador =
+        c.resultado.ganador === 'local' ? c.local.equipoId : c.visitante.equipoId;
+      if (idGanador) ganadorDe.set(c.numero, idGanador);
+    }
+  }
 
   // Árbol completo en columnas para dibujar la llave. La R32 va resuelta y en
   // orden "planar"; las rondas siguientes muestran al ganador pendiente de cada
   // cruce previo ("Gan. 73") — se irán resolviendo en una fase posterior.
   const porNumero = new Map(cruces32.map((c) => [c.numero, c]));
-  const pendiente = (n: number): OcupanteSlot => ({
-    etiqueta: `Gan. ${n}`,
-    confirmado: false,
-  });
+  // Slot de una ronda posterior: si el cruce que lo alimenta ya tiene ganador,
+  // se ubica al equipo; si no, se muestra "Gan. N" a la espera del resultado.
+  const slotAvance = (n: number): OcupanteSlot => {
+    const id = ganadorDe.get(n);
+    return id
+      ? { etiqueta: `Gan. ${n}`, equipoId: id, confirmado: true }
+      : { etiqueta: `Gan. ${n}`, confirmado: false };
+  };
   const rondas: RondaLlave[] = COLUMNAS_LLAVE.map(({ fase, etiqueta }) => {
     if (fase === 'r32') {
       return {
@@ -167,8 +213,8 @@ export function construirLlave(resultados: ResultadoMin[]): Llave {
       etiqueta,
       cruces: AVANCE.filter((a) => a.fase === fase).map((a) => ({
         numero: a.numero,
-        local: pendiente(a.localDe),
-        visitante: pendiente(a.visitanteDe),
+        local: slotAvance(a.localDe),
+        visitante: slotAvance(a.visitanteDe),
       })),
     };
   });
