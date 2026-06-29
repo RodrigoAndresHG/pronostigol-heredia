@@ -8,7 +8,7 @@ import { test } from 'node:test';
 import { strict as assert } from 'node:assert';
 import { construirLlave } from '../src/lib/eliminatorias.js';
 import { calcularPosiciones } from '../src/lib/posiciones.js';
-import { partidoPorId } from '../src/datos/partidos.js';
+import { partidoPorId, PARTIDOS } from '../src/datos/partidos.js';
 import { RONDA_32, ORDEN_R32 } from '../src/datos/eliminatorias.js';
 
 function res(partidoId: string, golesLocal: number, golesVisitante: number) {
@@ -120,6 +120,47 @@ test('los 16 fixtures de la Ronda de 32 están resueltos con los equipos correct
     assert.equal(p!.equipoLocalId, local, `R32-${numero} local`);
     assert.equal(p!.equipoVisitanteId, visitante, `R32-${numero} visitante`);
   }
+});
+
+// ─── Marcador del cruce + propagación del ganador a la ronda siguiente ──
+// Cierra los 12 grupos (cualquier marcador) para que la R32 use sus fixtures
+// reales; luego inyecta el resultado de un cruce y verifica el avance.
+const TODOS_LOS_GRUPOS = PARTIDOS.filter((p) => p.grupo).map((p) => res(p.id, 1, 0));
+const cruceEn = (
+  llave: ReturnType<typeof construirLlave>,
+  fase: string,
+  numero: number
+) => llave.rondas.find((r) => r.fase === fase)!.cruces.find((c) => c.numero === numero)!;
+
+test('R32 jugado: el cruce lleva su marcador y el ganador avanza a octavos', () => {
+  // R32-73 = RSA vs CAN; gana el visitante (CAN) 0–1.
+  const llave = construirLlave([...TODOS_LOS_GRUPOS, res('R32-73', 0, 1)]);
+  const c73 = cruceEn(llave, 'r32', 73);
+  assert.deepEqual(
+    [c73.resultado?.golesLocal, c73.resultado?.golesVisitante, c73.resultado?.ganador],
+    [0, 1, 'visitante']
+  );
+  // M73 alimenta el local del octavo M90 (AVANCE: localDe 73) → debe ubicar a CAN.
+  const m90 = cruceEn(llave, 'r16', 90);
+  assert.equal(m90.local.equipoId, 'CAN');
+  assert.equal(m90.local.confirmado, true);
+  // El otro lado de M90 (ganador de 75, no jugado) sigue pendiente.
+  assert.equal(m90.visitante.equipoId, undefined);
+  assert.equal(m90.visitante.etiqueta, 'Gan. 75');
+});
+
+test('R32 empatado en los 90 NO propaga ganador (faltarían los penales)', () => {
+  const llave = construirLlave([...TODOS_LOS_GRUPOS, res('R32-73', 1, 1)]);
+  assert.equal(cruceEn(llave, 'r32', 73).resultado?.ganador, 'empate');
+  const m90 = cruceEn(llave, 'r16', 90);
+  assert.equal(m90.local.equipoId, undefined);
+  assert.equal(m90.local.etiqueta, 'Gan. 73');
+});
+
+test('R32 sin jugar: el cruce no tiene resultado y el octavo queda pendiente', () => {
+  const llave = construirLlave(TODOS_LOS_GRUPOS);
+  assert.equal(cruceEn(llave, 'r32', 73).resultado, undefined);
+  assert.equal(cruceEn(llave, 'r16', 90).local.equipoId, undefined);
 });
 
 test('calcularPosiciones IGNORA resultados de R32 (no contamina la tabla de grupos)', () => {
