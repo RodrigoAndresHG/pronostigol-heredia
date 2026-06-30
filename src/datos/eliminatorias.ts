@@ -136,4 +136,5 @@ export const TERCEROS_QUE_CLASIFICAN = 8;
  */
 export const GANADORES_PENALES: Record<number, string> = {
   74: 'PAR', // Alemania 1-1 Paraguay (90'+alargue); Paraguay 4-3 en penales.
+  75: 'MAR', // Países Bajos 1-1 Marruecos (tras 120'); Marruecos ganó en penales.
 };
