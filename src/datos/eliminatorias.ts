@@ -123,3 +123,17 @@ export const PARTIDOS_POR_GRUPO = 6;
 
 /** Cuántos de los 12 terceros clasifican a la Ronda de 32. */
 export const TERCEROS_QUE_CLASIFICAN = 8;
+
+/**
+ * Ganadores por TANDA DE PENALES, por número de partido.
+ *
+ * En eliminatoria un empate no resuelve quién avanza, y la tabla `resultados`
+ * solo guarda los goles de 90'/120'. Cuando un cruce se define por penales,
+ * el ganador se anota aquí (manualmente) para que la llave lo propague a la
+ * ronda siguiente. El valor es el `equipoId` del que avanza.
+ *
+ * Ej.: M74 GER–PAR 1-1, Paraguay ganó 4-3 en penales → 74: 'PAR'.
+ */
+export const GANADORES_PENALES: Record<number, string> = {
+  74: 'PAR', // Alemania 1-1 Paraguay (90'+alargue); Paraguay 4-3 en penales.
+};

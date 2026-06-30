@@ -163,6 +163,14 @@ function FilaCruce({
   const fin = cruce.resultado; // presente solo si ya se jugó
   // ¿Acertó el consenso el ganador (1X2 de los 90')?
   const aciertoIA = fin && consenso ? consenso.favorito === fin.ganador : null;
+  // Quién ganó el cruce (por penales si el marcador quedó igualado), para
+  // resaltarlo. Sin resultado aún, se resalta al favorito del consenso.
+  const ganaLado = (o: OcupanteSlot, lado: 'local' | 'visitante') =>
+    fin
+      ? fin.ganadorPenales
+        ? fin.ganadorPenales === o.equipoId
+        : fin.ganador === lado
+      : consenso?.favorito === lado;
 
   const contenido = (
     <article
@@ -196,22 +204,26 @@ function FilaCruce({
       </div>
 
       <div className="mt-2 flex items-center justify-between gap-2">
-        <LadoEquipo
-          o={cruce.local}
-          destacado={fin ? fin.ganador === 'local' : consenso?.favorito === 'local'}
-        />
+        <LadoEquipo o={cruce.local} destacado={ganaLado(cruce.local, 'local')} />
         {fin ? (
-          <span className="font-mono text-[15px] font-semibold text-tinta-titulo shrink-0 tabular-nums">
-            {fin.golesLocal}
-            <span className="text-tinta-mute px-0.5">–</span>
-            {fin.golesVisitante}
+          <span className="font-mono text-[15px] font-semibold text-tinta-titulo shrink-0 tabular-nums flex items-baseline gap-1">
+            <span>
+              {fin.golesLocal}
+              <span className="text-tinta-mute px-0.5">–</span>
+              {fin.golesVisitante}
+            </span>
+            {fin.ganadorPenales && (
+              <span className="text-[9px] font-normal uppercase tracking-wide text-tinta-mute">
+                pen
+              </span>
+            )}
           </span>
         ) : (
           <span className="font-mono text-[11px] text-tinta-mute shrink-0">vs</span>
         )}
         <LadoEquipo
           o={cruce.visitante}
-          destacado={fin ? fin.ganador === 'visitante' : consenso?.favorito === 'visitante'}
+          destacado={ganaLado(cruce.visitante, 'visitante')}
           alineadoDerecha
         />
       </div>

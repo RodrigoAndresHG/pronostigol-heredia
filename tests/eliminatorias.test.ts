@@ -149,12 +149,24 @@ test('R32 jugado: el cruce lleva su marcador y el ganador avanza a octavos', () 
   assert.equal(m90.visitante.etiqueta, 'Gan. 75');
 });
 
-test('R32 empatado en los 90 NO propaga ganador (faltarían los penales)', () => {
+test('R32 empatado SIN ganador de penales registrado NO propaga', () => {
+  // R32-73 no está en GANADORES_PENALES → un 1-1 deja el octavo pendiente.
   const llave = construirLlave([...TODOS_LOS_GRUPOS, res('R32-73', 1, 1)]);
   assert.equal(cruceEn(llave, 'r32', 73).resultado?.ganador, 'empate');
   const m90 = cruceEn(llave, 'r16', 90);
   assert.equal(m90.local.equipoId, undefined);
   assert.equal(m90.local.etiqueta, 'Gan. 73');
+});
+
+test('R32 empate definido por PENALES propaga al ganador registrado', () => {
+  // R32-74 GER–PAR 1-1; GANADORES_PENALES[74]='PAR' → Paraguay avanza a M89 (localDe 74).
+  const llave = construirLlave([...TODOS_LOS_GRUPOS, res('R32-74', 1, 1)]);
+  const c74 = cruceEn(llave, 'r32', 74);
+  assert.equal(c74.resultado?.ganador, 'empate');
+  assert.equal(c74.resultado?.ganadorPenales, 'PAR');
+  const m89 = cruceEn(llave, 'r16', 89);
+  assert.equal(m89.local.equipoId, 'PAR');
+  assert.equal(m89.local.confirmado, true);
 });
 
 test('R32 sin jugar: el cruce no tiene resultado y el octavo queda pendiente', () => {
