@@ -9,6 +9,7 @@ import {
   COLUMNAS_LLAVE,
   PARTIDOS_POR_GRUPO,
   TERCEROS_QUE_CLASIFICAN,
+  GANADORES_PENALES,
   type SlotRef,
   type FaseLlave,
 } from '../datos/eliminatorias.js';
@@ -57,11 +58,15 @@ export interface ResultadoCruce {
   golesLocal: number;
   golesVisitante: number;
   /**
-   * Lado ganador en los 90'. 'empate' = igualdad en tiempo reglamentario;
-   * en eliminatoria se definiría por penales, dato que aún no guardamos, así
-   * que un empate NO propaga ganador a la ronda siguiente.
+   * Lado ganador en los 90'/120'. 'empate' = igualdad tras tiempo reglamentario
+   * (y alargue): el cruce se definió por penales (ver `ganadorPenales`).
    */
   ganador: 'local' | 'visitante' | 'empate';
+  /**
+   * Si fue empate definido por PENALES, el `equipoId` del que avanzó. Permite
+   * propagar al ganador y resaltarlo aunque el marcador en goles sea igualado.
+   */
+  ganadorPenales?: string;
 }
 
 export interface CruceResuelto {
@@ -167,24 +172,32 @@ export function construirLlave(resultados: ResultadoMin[]): Llave {
     // Si el partido ya se jugó, adjuntamos su marcador final.
     const r = resPorId.get(`R32-${c.numero}`);
     if (r) {
+      const ganador = ganadorDeGoles(r.golesLocal, r.golesVisitante);
       base.resultado = {
         golesLocal: r.golesLocal,
         golesVisitante: r.golesVisitante,
-        ganador: ganadorDeGoles(r.golesLocal, r.golesVisitante),
+        ganador,
+        // Empate resuelto por penales: el ganador anotado a mano (ver datos).
+        ...(ganador === 'empate' && GANADORES_PENALES[c.numero]
+          ? { ganadorPenales: GANADORES_PENALES[c.numero] }
+          : {}),
       };
     }
     return base;
   });
 
-  // Quién avanza: ganador (en los 90') de cada cruce ya resuelto. Un empate no
-  // resuelve avance (faltarían los penales). Hoy solo la R32 tiene resultados;
-  // al cargar fixtures de rondas posteriores (Fase B) este mapa los cubrirá.
+  // Quién avanza: el ganador de cada cruce ya resuelto. Si fue empate en goles,
+  // avanza el ganador por penales (si está registrado). Hoy solo la R32 tiene
+  // resultados; al cargar fixtures de rondas posteriores este mapa los cubrirá.
   const ganadorDe = new Map<number, string>();
   for (const c of cruces32) {
-    if (c.resultado && c.resultado.ganador !== 'empate') {
-      const idGanador =
-        c.resultado.ganador === 'local' ? c.local.equipoId : c.visitante.equipoId;
+    if (!c.resultado) continue;
+    const { ganador, ganadorPenales } = c.resultado;
+    if (ganador !== 'empate') {
+      const idGanador = ganador === 'local' ? c.local.equipoId : c.visitante.equipoId;
       if (idGanador) ganadorDe.set(c.numero, idGanador);
+    } else if (ganadorPenales) {
+      ganadorDe.set(c.numero, ganadorPenales);
     }
   }
 
